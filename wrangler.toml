@@ -1,0 +1,9 @@
+name = "malta-osint"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+NEXT_PUBLIC_MAP_CENTER_LAT = "35.9375"
+NEXT_PUBLIC_MAP_CENTER_LNG = "14.3754"
+NEXT_PUBLIC_MAP_ZOOM = "9"
+NEXT_PUBLIC_DEFAULT_LAYERS = "maritime,aviation,weather,earthquakes,news"

@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Golden Bay", "type": "sandy", "accessibility": "public" },
+      "geometry": { "type": "Point", "coordinates": [14.335, 35.935] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Għajn Tuffieħa", "type": "sandy", "accessibility": "public" },
+      "geometry": { "type": "Point", "coordinates": [14.330, 35.940] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": " Mellieħa Bay", "type": "sandy", "accessibility": "public" },
+      "geometry": { "type": "Point", "coordinates": [14.360, 35.965] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "St. Peter's Pool", "type": "rocky", "accessibility": "public" },
+      "geometry": { "type": "Point", "coordinates": [14.545, 35.830] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Blue Lagoon (Comino)", "type": "sandy", "accessibility": "public" },
+      "geometry": { "type": "Point", "coordinates": [14.390, 36.005] }
+    }
+  ]
+}

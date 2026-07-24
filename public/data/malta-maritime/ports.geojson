@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Valletta Grand Harbour",
+        "type": "commercial",
+        "capacity": "major",
+        "description": "Main commercial port and cruise terminal"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.508, 35.888] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Marsaxlokk Fish Market",
+        "type": "fishing",
+        "capacity": "medium",
+        "description": "Traditional fishing harbour and Sunday fish market"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.545, 35.845] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mġarr Harbour (Gozo)",
+        "type": "ferry",
+        "capacity": "major",
+        "description": "Main ferry terminal connecting Malta and Gozo"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.295, 36.025] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Cirkewwa Terminal",
+        "type": "ferry",
+        "capacity": "medium",
+        "description": "Ferry terminal for Comino and Gozo crossings"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.330, 35.990] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Marsamxett Harbour",
+        "type": "marina",
+        "capacity": "medium",
+        "description": "Marina and yacht harbour"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.510, 35.895] }
+    }
+  ]
+}

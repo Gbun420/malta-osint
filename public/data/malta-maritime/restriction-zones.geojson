@@ -1,0 +1,79 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Grand Harbour Security Zone",
+        "type": "restricted",
+        "description": "Active security zone around Grand Harbour. Vessels require authorization.",
+        "color": "#FF3D3D"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [14.505, 35.890],
+          [14.515, 35.890],
+          [14.515, 35.880],
+          [14.505, 35.880],
+          [14.505, 35.890]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Marsaxlokk Fuel Terminal Zone",
+        "type": "restricted",
+        "description": "Restricted zone around fuel storage facilities.",
+        "color": "#FF9500"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [14.545, 35.840],
+          [14.555, 35.840],
+          [14.555, 35.830],
+          [14.545, 35.830],
+          [14.545, 35.840]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Delimara Power Station Zone",
+        "type": "caution",
+        "description": "Caution zone near power station infrastructure.",
+        "color": "#D4AF37"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [14.570, 35.825],
+          [14.580, 35.825],
+          [14.580, 35.815],
+          [14.570, 35.815],
+          [14.570, 35.825]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Comino Channel Shipping Lane",
+        "type": "shipping_lane",
+        "description": "Primary shipping lane between Malta and Comino.",
+        "color": "#00E5FF"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [14.350, 36.010],
+          [14.380, 35.980],
+          [14.410, 35.950]
+        ]
+      }
+    }
+  ]
+}

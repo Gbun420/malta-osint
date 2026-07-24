@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const SITE_URL = "https://geospatialcommand.center";
-const SITE_NAME = "Third Eye";
-const SITE_TITLE = "Third Eye — Open Source Intelligence Platform | Live Flight Tracking, CCTV, OSINT Tools & More";
-const SITE_DESCRIPTION = "The open-source Palantir alternative. Track 10,000+ aircraft, 2,000 satellites, and worldwide CCTV cameras in real-time on a 3D globe. Run Nmap scans, DNS lookups, WHOIS queries, SSL cert analysis & threat intelligence — all from your browser. 20+ live data feeds including earthquakes, wildfires, nuclear facilities, cyber threats, and global conflicts. Free & open source.";
+const SITE_URL = "https://malta-osint.pages.dev";
+const SITE_NAME = "Malta OSINT";
+const SITE_TITLE = "Malta OSINT — Live Maritime, Aviation & Intelligence Dashboard";
+const SITE_DESCRIPTION = "Real-time OSINT dashboard for Malta. Track AIS vessels, ADS-B flights, marine weather, seismic activity, and local news. Powered by open data sources.";
 
 export const viewport: Viewport = {
   themeColor: "#D4AF37",

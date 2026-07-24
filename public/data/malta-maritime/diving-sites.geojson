@@ -1,0 +1,71 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bluen Hole (Dwejra)",
+        "type": "natural",
+        "depth": "max 30m",
+        "difficulty": "intermediate",
+        "description": "Famous blue hole dive site with underwater arch"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.245, 36.050] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Inland Sea (Dwejra)",
+        "type": "natural",
+        "depth": "max 20m",
+        "difficulty": "beginner",
+        "description": "Shallow lagoon dive through tunnel to open sea"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.248, 36.048] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Um El Faroud Wreck",
+        "type": "wreck",
+        "depth": "28-34m",
+        "difficulty": "advanced",
+        "description": "115m tanker wreck, popular deep dive"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.540, 35.820] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SS Polynesia Wreck",
+        "type": "wreck",
+        "depth": "18-42m",
+        "difficulty": "intermediate",
+        "description": "British steamship wreck from 1918"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.535, 35.825] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Għar Lapsi",
+        "type": "natural",
+        "depth": "max 25m",
+        "difficulty": "intermediate",
+        "description": "Cave and reef diving with clear waters"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.470, 35.865] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Santa Maria Caves (Comino)",
+        "type": "natural",
+        "depth": "max 30m",
+        "difficulty": "intermediate",
+        "description": "Network of underwater caves and tunnels"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.395, 36.010] }
+    }
+  ]
+}
