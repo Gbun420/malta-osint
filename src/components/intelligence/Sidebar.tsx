@@ -1,23 +1,5 @@
 'use client';
-
-import Link from 'next/link';
-import {
-  LayoutDashboard,
-  FileText,
-  Map,
-  Ship,
-  Plane,
-  Activity,
-  Shield,
-  Scale,
-  DollarSign,
-  Heart,
-  AlertCircle,
-  Radio,
-  Settings,
-  Menu,
-  X,
-} from 'lucide-react';
+import { useState } from 'react';
 
 interface SidebarProps {
   activeRoute: string;
@@ -25,83 +7,142 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const NAV_ITEMS = [
-  { href: '/', label: 'Command Centre', icon: LayoutDashboard },
-  { href: '/brief', label: "Minister's Brief", icon: FileText },
-  { href: '/events', label: 'Global Events', icon: Map },
-  { href: '/malta-impact', label: 'Malta Impact', icon: Activity },
-  { href: '/countries', label: 'Countries', icon: Shield },
-  { href: '/eu', label: 'EU & Multilateral', icon: Scale },
-  { href: '/sanctions', label: 'Sanctions', icon: Shield },
-  { href: '/maritime', label: 'Maritime', icon: Ship },
-  { href: '/aviation', label: 'Aviation', icon: Plane },
-  { href: '/economic', label: 'Economic Security', icon: DollarSign },
-  { href: '/humanitarian', label: 'Humanitarian', icon: Heart },
-  { href: '/review', label: 'Review Queue', icon: AlertCircle },
-  { href: '/sources', label: 'Source Health', icon: Radio },
-  { href: '/audio', label: 'Audio Intelligence', icon: Radio },
-];
-
 export function Sidebar({ activeRoute, isOpen, onToggle }: SidebarProps) {
   return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={onToggle} />
-      )}
-      <aside
-        className={`
-          fixed left-0 top-0 z-30 h-full border-r border-gold/20 bg-void/95 backdrop-blur-md
-          transition-transform duration-200 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:relative md:translate-x-0 md:w-64 md:border-r
-          flex flex-col
-        `}
-      >
-        <div className="flex h-14 items-center justify-between border-b border-gold/20 px-4">
-          <Link href="/" className="text-sm font-bold tracking-wide text-gold">
-            Third Eye
-          </Link>
-          <button
-            className="md:hidden rounded p-1 text-white/60 hover:text-white"
-            onClick={onToggle}
-            aria-label="Close sidebar"
+    <aside className="fixed inset-y-0 left-0 w-64 bg-void/95 border-r border-gold/20">
+      <div className="p-4">
+        <button 
+          className="hamburger hamburger-open" 
+          onClick={onToggle}
+          aria-label="Toggle menu"
+        >
+          <span className="hamburger hamburger-open"></span>
+          <span className="hamburger hamburger-open"></span>
+          <span className="hamburger hamburger-open"></span>
+        </button>
+      </div>
+      
+      <div className="p-4">
+        <Link 
+          href="/" 
+          className="block p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          Command Centre
+        </Link>
+        
+        <Link 
+          href="/brief" 
+          className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          Minister's Brief
+        </Link>
+        
+        <Link 
+          href="/events" 
+          className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          Global Events
+        </Link>
+        
+        <Link 
+          href="/malta-impact" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          Malta Impact
+        </Link>
+        
+        <Link 
+          href="/countries" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          Countries
+        </Link>
+        
+        <Link 
+          href="/eu" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+        >
+          <span className="hamburger hamburger-open"></span>
+          EU & Multilateral
+        </Link>
+        
+        <Link 
+            href="/sanctions" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-auto py-2">
-          <ul className="space-y-0.5 px-2">
-            {NAV_ITEMS.map(item => {
-              const Icon = item.icon;
-              const isActive = activeRoute === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`
-                      flex items-center gap-3 rounded-md px-3 py-2 text-sm
-                      transition-colors
-                      ${isActive
-                        ? 'bg-gold/10 text-gold'
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'}
-                    `}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="border-t border-gold/20 px-4 py-3">
-          <div className="text-xs text-white/50">
-            <span className="text-green-400">●</span> Connected
-          </div>
+            <span className="hamburger hamburger-open"></span>
+            Sanctions
+          </Link>
+          
+          <Link 
+            href="/maritime" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Maritime
+          </Link>
+          
+          <Link 
+            href="/aviation" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Aviation
+          </Link>
+          
+          <Link 
+            href="/economic" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Economic Security
+          </Link>
+          
+          <Link 
+            href="/humanitarian" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Humanitarian
+          </Link>
+          
+          <Link 
+            href="/review" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Review Queue
+          </Link>
+          
+          <Link 
+            href="/sources" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Source Health
+          </Link>
+          
+          <Link 
+            href="/audio" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Audio Intelligence
+          </Link>
+          
+          <Link 
+            href="/settings" 
+            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
+          >
+            <span className="hamburger hamburger-open"></span>
+            Settings
+          </Link>
         </div>
       </aside>
     </>
   );
-}
