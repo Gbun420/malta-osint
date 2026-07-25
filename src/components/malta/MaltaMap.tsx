@@ -452,7 +452,7 @@ function MaltaMap({
         geometry: { type: 'Point' as const, coordinates: [f.lng, f.lat] },
         properties: { brightness: f.brightness, confidence: f.confidence },
       })) };
-      map.getSource('fires')?.setData(fc);
+      (map.getSource('fires') as maplibregl.GeoJSONSource)?.setData(fc);
     }
 
     // Flights
