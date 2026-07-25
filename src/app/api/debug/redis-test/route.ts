@@ -8,19 +8,15 @@ export async function GET() {
 
   const redis = new Redis({ url, token });
 
-  const knownKey = 'intel:health:council-eu-rss';
-  const directVal = await redis.get(knownKey);
-  const keys = await redis.keys('intel:health:*');
-
-  const individual: Record<string, string> = {};
-  for (const k of keys.slice(0, 5)) {
-    const v = await redis.get(k);
-    individual[k] = typeof v;
-  }
+  const eventKeys = await redis.keys('intel:event:*');
+  const healthKeys = await redis.keys('intel:health:*');
+  const evidenceKeys = await redis.keys('intel:evidence:*');
 
   return NextResponse.json({
-    directExists: directVal !== null && directVal !== undefined,
-    keysFound: keys.length,
-    individualTypes: individual,
+    eventCount: eventKeys.length,
+    eventKeys: eventKeys.slice(0, 5).map(k => k.slice(12)),
+    healthCount: healthKeys.length,
+    healthKeys: healthKeys.map(k => k.slice(12)),
+    evidenceCount: evidenceKeys.length,
   });
 }

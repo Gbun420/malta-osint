@@ -57,11 +57,9 @@ export class RedisRepository implements IntelligenceRepository {
   }
 
   async upsertEvents(records: IntelligenceEvent[]): Promise<void> {
-    const pipeline = this.redis.pipeline();
     for (const r of records) {
-      pipeline.set(key(PREFIXES.event, r.id), JSON.stringify(r));
+      await this.redis.set(key(PREFIXES.event, r.id), JSON.stringify(r));
     }
-    await pipeline.exec();
   }
 
   async upsertEntities(records: IntelligenceEntity[]): Promise<void> {
