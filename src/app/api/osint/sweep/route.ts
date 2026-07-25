@@ -108,10 +108,34 @@ export async function GET(req: Request) {
       org: (geoData.org as string) || '',
     };
 
+    // --- 4. Port Scan via local scanner (if configured) ---
+    let scanResult = null;
+    const scannerUrl = process.env.SCANNER_URL;
+    const scannerKey = process.env.SCANNER_KEY;
+    if (scannerUrl && scannerKey) {
+      try {
+        const scanRes = await fetch(`${scannerUrl}/scan`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Scanner-Key': scannerKey,
+          },
+          body: JSON.stringify({ host: ip }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (scanRes.ok) {
+          scanResult = await scanRes.json();
+        }
+      } catch {
+        // Scanner unreachable — skip scan
+      }
+    }
+
     return NextResponse.json({
       center,
       target_ip: ip,
-      cidr
+      cidr,
+      ...(scanResult && { scan: { open_ports: scanResult.open, closed_ports: scanResult.closed, scanned_at: scanResult.timestamp } }),
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',

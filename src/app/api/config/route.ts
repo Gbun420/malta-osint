@@ -4,9 +4,7 @@ import { join } from 'path';
 
 const ENV_PATH = join(process.cwd(), '.env.local');
 
-// Keys exposed to the GUI (order matters — drives display order)
 const EXPOSED_KEYS = [
-  // Gemini AI
   'GEMINI_API_KEY_1',
   'GEMINI_API_KEY_2',
   'GEMINI_API_KEY_3',
@@ -15,18 +13,32 @@ const EXPOSED_KEYS = [
   'GEMINI_API_KEY_6',
   'GEMINI_API_KEY_7',
   'GEMINI_API_KEY_8',
-  // Data sources
   'FIRMS_API_KEY',
   'AIS_API_KEY',
+  'VESSEL_API_KEY',
   'OPENSKY_CLIENT_ID',
   'OPENSKY_CLIENT_SECRET',
-  // Scanner backend
   'SCANNER_URL',
   'SCANNER_KEY',
-  // Ollama local runtime
   'OLLAMA_HOST',
   'OLLAMA_MODEL',
 ];
+
+const SECRET_KEYS = new Set([
+  'GEMINI_API_KEY_1', 'GEMINI_API_KEY_2', 'GEMINI_API_KEY_3', 'GEMINI_API_KEY_4',
+  'GEMINI_API_KEY_5', 'GEMINI_API_KEY_6', 'GEMINI_API_KEY_7', 'GEMINI_API_KEY_8',
+  'FIRMS_API_KEY', 'AIS_API_KEY', 'VESSEL_API_KEY', 'OPENSKY_CLIENT_SECRET',
+  'SCANNER_KEY',
+]);
+
+function maskValue(key: string, value: string): string {
+  if (!value) return '';
+  if (SECRET_KEYS.has(key)) {
+    if (value.length <= 8) return '********';
+    return value.slice(0, 4) + '****' + value.slice(-4);
+  }
+  return value;
+}
 
 function parseEnvFile(raw: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -48,13 +60,10 @@ function patchEnvFile(raw: string, updates: Record<string, string>): string {
 
   const result = lines.map(line => {
     const trimmed = line.trim();
-    // Skip blank lines and comment-only lines
     if (!trimmed || trimmed.startsWith('#')) return line;
-
     const eq = trimmed.indexOf('=');
     if (eq === -1) return line;
     const key = trimmed.slice(0, eq).trim();
-
     if (key in updates) {
       patched.add(key);
       const val = updates[key];
@@ -64,7 +73,6 @@ function patchEnvFile(raw: string, updates: Record<string, string>): string {
     return line;
   });
 
-  // Append keys that were previously only comments and now have values
   for (const [key, val] of Object.entries(updates)) {
     if (!patched.has(key) && val !== '') {
       result.push(`${key}=${val}`);
@@ -79,8 +87,6 @@ export async function GET() {
   for (const key of EXPOSED_KEYS) {
     values[key] = process.env[key] ?? '';
   }
-  // If running on Vercel (no .env.local file), process.env already has the values.
-  // Local dev may have .env.local; try to overlay it for runtime edits via POST.
   try {
     const raw = readFileSync(ENV_PATH, 'utf-8');
     const fileVals = parseEnvFile(raw);
@@ -88,9 +94,20 @@ export async function GET() {
       if (fileVals[key]) values[key] = fileVals[key];
     }
   } catch {
-    // .env.local doesn't exist (e.g. Vercel) — process.env is sufficient
+
   }
-  return NextResponse.json({ values, keys: EXPOSED_KEYS });
+
+  const masked: Record<string, string> = {};
+  for (const key of EXPOSED_KEYS) {
+    masked[key] = maskValue(key, values[key]);
+  }
+
+  const status: Record<string, boolean> = {};
+  for (const key of EXPOSED_KEYS) {
+    status[key] = !!values[key];
+  }
+
+  return NextResponse.json({ values: masked, keys: EXPOSED_KEYS, status });
 }
 
 export async function POST(req: NextRequest) {
@@ -100,7 +117,6 @@ export async function POST(req: NextRequest) {
 
     for (const key of EXPOSED_KEYS) {
       if (key in body) {
-        // Allow only whitelisted keys; strip newlines for safety
         updates[key] = String(body[key]).replace(/[\r\n]/g, '').trim();
       }
     }

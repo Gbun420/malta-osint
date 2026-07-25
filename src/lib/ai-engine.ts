@@ -148,6 +148,61 @@ export function createGeminiClient(apiKey: string): GoogleGenerativeAI {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Ollama Local LLM — fallback when Gemini is unavailable
+   ───────────────────────────────────────────────────────────── */
+
+const OLLAMA_DEFAULT_HOST = 'http://127.0.0.1:11434';
+const OLLAMA_DEFAULT_MODEL = 'qwen3.5:4b';
+
+export function getOllamaConfig(): { host: string; model: string } | null {
+  const host = process.env.OLLAMA_HOST || OLLAMA_DEFAULT_HOST;
+  const model = process.env.OLLAMA_MODEL || OLLAMA_DEFAULT_MODEL;
+  if (!host || !model) return null;
+  return { host, model };
+}
+
+export async function ollamaGenerate(
+  prompt: string,
+  system?: string
+): Promise<string> {
+  const config = getOllamaConfig();
+  if (!config) throw new Error('Ollama not configured');
+
+  const res = await fetch(`${config.host}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: config.model,
+      prompt: system ? `${system}\n\n${prompt}` : prompt,
+      stream: false,
+      options: { temperature: 0.3, num_predict: 4096 },
+    }),
+    signal: AbortSignal.timeout(60000),
+  });
+
+  if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+  const data = await res.json();
+  return data.response || '';
+}
+
+export async function ollamaAnalyzeIntelligence(
+  context: IntelligenceContext,
+  userQuery: string
+): Promise<string> {
+  const contextData = serializeContext(context);
+  const prompt = `## CURRENT OPERATIONAL DATA\n${contextData}\n\n## ANALYST QUERY\n${userQuery}\n\nProvide your intelligence assessment based on the operational data above and the analyst's query.`;
+  return ollamaGenerate(prompt, SYSTEM_PROMPT);
+}
+
+export async function ollamaGenerateBriefing(
+  context: IntelligenceContext
+): Promise<string> {
+  const contextData = serializeContext(context);
+  const prompt = `${BRIEFING_PROMPT}\n\n## CURRENT OPERATIONAL DATA\n${contextData}\n\nGenerate the briefing now.`;
+  return ollamaGenerate(prompt, SYSTEM_PROMPT);
+}
+
+/* ─────────────────────────────────────────────────────────────
    API Key Rotation — Round-robin through available keys
    ───────────────────────────────────────────────────────────── */
 

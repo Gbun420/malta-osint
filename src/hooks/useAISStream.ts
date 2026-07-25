@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MALTA_BBOX } from '@/lib/malta/bbox';
+const WORLD_BBOX = { north: 90, south: -90, east: 180, west: -180 };
 
 export interface AISMessage {
   MessageType: 'PositionReport' | 'ShipStaticData' | 'ShipStaticDataReport' | 'LongRangeAisBroadcastMessage';
@@ -189,7 +189,7 @@ interface UseAISStreamReturn {
   vesselCount: number;
   isConnected: boolean;
   error: Error | null;
-  status: 'connecting' | 'connected' | 'error' | 'disabled';
+  status: 'connecting' | 'connected' | 'error' | 'disabled' | 'unconfigured';
   connect: () => void;
   disconnect: () => void;
 }
@@ -197,7 +197,7 @@ interface UseAISStreamReturn {
 export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamReturn {
   console.log('[useAISSTREAM HOOK] Called with options:', options);
   const {
-    bbox = MALTA_BBOX,
+    bbox = WORLD_BBOX,
     apiKey = '',
     onVesselUpdate,
     onError,
@@ -226,8 +226,14 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
     setIsConnected(false);
   }, []);
 
-  // Define connect function and keep it in a ref for use in timeouts
+  const hasValidKey = apiKey && apiKey.length > 10;
+
   const connect = useCallback(() => {
+    if (!hasValidKey) {
+      setError(new Error('AIS API key not configured — WebSocket relay required'));
+      return;
+    }
+
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
@@ -267,7 +273,6 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
 
             vesselsRef.current.set(parsed.mmsi, updated);
 
-            // Limit vessel count
             if (vesselsRef.current.size > maxVessels) {
               const firstKey = vesselsRef.current.keys().next().value;
               if (firstKey) vesselsRef.current.delete(firstKey);
@@ -282,12 +287,8 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
       };
 
       ws.onclose = () => {
-        console.log('[AIS] Disconnected, reconnecting in 5s...');
+        console.log('[AIS] Disconnected');
         setIsConnected(false);
-        // Use the ref to call the latest connect callback
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connectCallbackRef.current();
-        }, 5000);
       };
 
       ws.onerror = (err) => {
@@ -300,14 +301,9 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
       console.error('[AIS] Connection failed:', e);
       setError(e as Error);
       onError?.(e as Error);
-      // Schedule retry using the ref
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connectCallbackRef.current();
-      }, 5000);
     }
-  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels]);
+  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels, hasValidKey]);
 
-  // Keep the ref up to date
   useEffect(() => {
     connectCallbackRef.current = connect;
   }, [connect]);
@@ -319,7 +315,7 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
   }, [cleanup]);
 
   useEffect(() => {
-    if (enabled) {
+    if (enabled && hasValidKey) {
       connect();
     } else {
       disconnect();
@@ -328,11 +324,13 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
     return () => {
       disconnect();
     };
-  }, [connect, disconnect, enabled]);
+  }, [connect, disconnect, enabled, hasValidKey]);
 
-  // Compute status for compatibility with MaltaDashboard
+  const hasApiKey = apiKey && apiKey.length > 10;
   const status = !enabled
     ? 'disabled'
+    : !hasApiKey
+    ? 'unconfigured'
     : isConnected
     ? 'connected'
     : error
@@ -387,7 +385,7 @@ export function useClusteredVessels(
     if (!clusters.has(key)) {
       const clusterVessel: Vessel = {
         ...vessel,
-        mssi: 0, // Special marker for cluster
+        mmsi: 0, // Special marker for cluster
         name: `Cluster (1)`,
         type: 'cluster',
       };

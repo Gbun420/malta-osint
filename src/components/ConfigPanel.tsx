@@ -36,6 +36,7 @@ const SECTIONS = [
     keys: [
       { key: 'FIRMS_API_KEY',        label: 'NASA FIRMS (Fires)',      hint: 'FIRMS API key', secret: true },
       { key: 'AIS_API_KEY',          label: 'AIS Stream (Maritime)',    hint: 'AIS API key', secret: true },
+      { key: 'VESSEL_API_KEY',       label: 'VesselAPI (Satellite AIS)',hint: 'VesselAPI Bearer token', secret: true },
       { key: 'OPENSKY_CLIENT_ID',    label: 'OpenSky Client ID',       hint: 'opensky username', secret: false },
       { key: 'OPENSKY_CLIENT_SECRET',label: 'OpenSky Client Secret',   hint: 'opensky password', secret: true },
     ],

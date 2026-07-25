@@ -209,66 +209,48 @@ function connectAisStream() {
 // Start connection process asynchronously
 connectAisStream();
 
-// --- SCM Integration: VesselAPI Hybrid Fallback (Satellite AIS) ---
+// --- VesselAPI.com Satellite AIS Fallback ---
 let lastVesselApiFetch = 0;
 async function fetchVesselApiFallback() {
   const apiKey = process.env.VESSEL_API_KEY;
   if (!apiKey) return;
   const now = Date.now();
-  if (now - lastVesselApiFetch < 60000) return; // Poll every 60s max
+  if (now - lastVesselApiFetch < 120000) return;
   lastVesselApiFetch = now;
 
   try {
-    // In a real production scenario, this makes a REST request to VesselAPI bounding box endpoint:
-    // const res = await fetch(`https://api.vesselapi.com/v1/tracking?bbox=...`, { headers: { Authorization: `Bearer ${apiKey}` } });
-    
-    // For this simulation, since we are authenticating successfully, we inject realistic satellite AIS data
-    // into the known blind spots (Hormuz and Suez) that aisstream.io cannot cover.
-    
-    const ghostShips = [];
-    const numHormuz = Math.floor(Math.random() * 20) + 45; // 45-65 ships (Trigger CRITICAL)
-    const numSuez = Math.floor(Math.random() * 15) + 30; // 30-45 ships (Trigger HIGH/CRITICAL)
-    
-    // Generate Hormuz
-    for (let i=0; i<numHormuz; i++) {
-      ghostShips.push({
-        mmsi: 900000000 + i,
-        lat: 25.5 + Math.random() * 1.5,
-        lng: 54.5 + Math.random() * 2.5,
-        speed: Math.random() * 14,
-        heading: Math.random() * 360,
-        type: Math.random() > 0.5 ? 'tanker' : 'cargo',
-        name: `V-SAT ${Math.floor(Math.random()*9000)+1000}`,
-        destination: 'UNKNOWN',
-        flag: 'S-AIS'
-      });
+    const res = await fetch(
+      `https://api.vesselapi.com/v1/tracking?bbox=-90,-180,90,180&limit=500`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+    if (!res.ok) {
+      console.warn(`[VesselAPI] HTTP ${res.status}`);
+      return;
     }
-
-    // Generate Suez
-    for (let i=0; i<numSuez; i++) {
-      ghostShips.push({
-        mmsi: 910000000 + i,
-        lat: 28.0 + Math.random() * 3.5,
-        lng: 32.5 + Math.random() * 1.0,
-        speed: Math.random() * 12,
-        heading: Math.random() * 360,
-        type: Math.random() > 0.7 ? 'tanker' : 'cargo',
-        name: `V-SAT ${Math.floor(Math.random()*9000)+1000}`,
-        destination: 'EUROPE',
-        flag: 'S-AIS'
-      });
-    }
-
-    // Merge into global cache
-    for (const ship of ghostShips) {
-      shipsCache.set(ship.mmsi, {
-        id: ship.mmsi, mmsi: ship.mmsi, lat: ship.lat, lng: ship.lng, speed: ship.speed,
-        heading: ship.heading, timestamp: Date.now(), type: ship.type,
-        name: ship.name, destination: ship.destination, flag: ship.flag
+    const data = await res.json();
+    const vessels = data?.vessels || data?.data || [];
+    for (const v of vessels) {
+      const mmsi = v.mmsi || v.MMSI;
+      if (!mmsi) continue;
+      shipsCache.set(mmsi, {
+        id: mmsi,
+        mmsi,
+        lat: v.lat || v.latitude,
+        lng: v.lng || v.longitude,
+        speed: v.sog || v.speed || 0,
+        heading: v.cog || v.heading || 0,
+        timestamp: Date.now(),
+        type: v.type || v.ship_type || 'unknown',
+        name: v.name || v.ship_name || `SAT-${mmsi}`,
+        destination: v.destination || 'UNKNOWN',
+        flag: v.flag || 'S-AIS',
       });
     }
   } catch (e) {
-    console.warn("VesselAPI Fallback Error:", e);
+    console.warn('[VesselAPI] Fallback error:', e);
   }
 }
 

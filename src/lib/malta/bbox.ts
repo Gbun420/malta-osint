@@ -74,8 +74,9 @@ export function getShipCategory(typeCode: number): string {
   return 'other';
 }
 
-export function isInMaltaBbox(lat: number, lng: number, bbox = MALTA_BBOX): boolean {
-  return lat >= bbox.south && lat <= bbox.north && lng >= bbox.west && lng <= bbox.east;
+export function isInMaltaBbox(lat: number, lng: number, bbox?: { north: number; south: number; east: number; west: number }): boolean {
+  const b = bbox ?? MALTA_BBOX;
+  return lat >= b.south && lat <= b.north && lng >= b.west && lng <= b.east;
 }
 
 export function isInMaltaFir(lat: number, lng: number): boolean {

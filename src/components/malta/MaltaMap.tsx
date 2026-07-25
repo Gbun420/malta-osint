@@ -424,7 +424,7 @@ function MaltaMap({
         }));
 
       const fc = { type: 'FeatureCollection' as const, features: vesselFeatures };
-      map.getSource('vessels')?.setData(fc);
+      (map.getSource('vessels') as maplibregl.GeoJSONSource)?.setData(fc);
     } catch (e) {
       console.warn('[MaltaMap] Vessel update error:', e);
     }
@@ -442,7 +442,7 @@ function MaltaMap({
         geometry: { type: 'Point' as const, coordinates: [eq.lng, eq.lat] },
         properties: { magnitude: eq.magnitude, place: eq.place, time: eq.time, depth: eq.depth },
       })) };
-      map.getSource('seismic')?.setData(fc);
+      (map.getSource('seismic') as maplibregl.GeoJSONSource)?.setData(fc);
     }
 
     // Fires

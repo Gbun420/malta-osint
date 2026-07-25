@@ -11,6 +11,8 @@ import {
   createGeminiClient,
   rotateApiKey,
   analyzeIntelligence,
+  ollamaAnalyzeIntelligence,
+  getOllamaConfig,
   type IntelligenceContext,
 } from '@/lib/ai-engine';
 
@@ -200,6 +202,27 @@ export async function POST(
     }
 
     if (message.includes('RESOURCE_EXHAUSTED') || message.includes('quota')) {
+      // Fall back to Ollama if configured
+      const ollama = getOllamaConfig();
+      if (ollama) {
+        try {
+          const analysis = await ollamaAnalyzeIntelligence(body.context, body.query.trim());
+          return NextResponse.json(
+            {
+              analysis,
+              model: `ollama/${ollama.model}`,
+              timestamp: new Date().toISOString(),
+            },
+            {
+              headers: {
+                'X-RateLimit-Remaining': String(rateCheck.remaining),
+              },
+            }
+          );
+        } catch {
+          // Ollama also failed — fall through to error
+        }
+      }
       return NextResponse.json(
         {
           error: 'Gemini API quota exhausted. Try again later or provide your own API key.',
@@ -217,6 +240,28 @@ export async function POST(
         },
         { status: 422 }
       );
+    }
+
+    // Generic Gemini failure — try Ollama fallback
+    const ollama = getOllamaConfig();
+    if (ollama) {
+      try {
+        const analysis = await ollamaAnalyzeIntelligence(body.context, body.query.trim());
+        return NextResponse.json(
+          {
+            analysis,
+            model: `ollama/${ollama.model}`,
+            timestamp: new Date().toISOString(),
+          },
+          {
+            headers: {
+              'X-RateLimit-Remaining': String(rateCheck.remaining),
+            },
+          }
+        );
+      } catch {
+        // Both failed
+      }
     }
 
     console.error('[THIRD EYE AI] Analysis error:', message);

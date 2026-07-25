@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { Ship, Plane, Waves, Newspaper, Activity, RefreshCw } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
+import type { MaltaLiveResponse, SourceMeta } from '@/lib/malta-live-types';
 
 const MaltaMap = dynamic(() => import('@/components/malta/MaltaMap'), { ssr: false });
 
@@ -27,46 +28,72 @@ export default function MaltaDashboard() {
   const [fires, setFires] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
   const [omrg, setOmrg] = useState<any>(null);
+  const [sourceMeta, setSourceMeta] = useState<Record<string, SourceMeta> | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const lastGoodDataRef = useRef<{
+    flights: any[];
+    earthquakes: any[];
+    fires: any[];
+    news: any[];
+    marineWeather: any;
+    omrg: any;
+  }>({ flights: [], earthquakes: [], fires: [], news: [], marineWeather: null, omrg: null });
 
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
-  const [aisApiKey, setAisApiKey] = useState('');
 
-  // Fetch AIS API key from server (kept server-side, never hardcoded in client)
-  useEffect(() => {
-    fetch('/api/config')
-      .then(r => r.json())
-      .then(data => setAisApiKey(data.values?.AIS_API_KEY || ''))
-      .catch(() => console.warn('[AIS] Failed to fetch API key'));
-  }, []);
-
-  // AIS WebSocket for vessels
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
-    apiKey: aisApiKey,
+    apiKey: '',
     enabled: activeLayers.vessels,
   });
 
-  // Splash screen
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch data from Malta API
   const fetchMaltaData = useCallback(async () => {
     try {
-      const res = await fetch('/api/malta/live');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.flights) setFlights(data.flights);
-        if (data.marine) setMarineWeather(data.marine);
-        if (data.earthquakes) setEarthquakes(data.earthquakes);
-        if (data.fires) setFires(data.fires);
-        if (data.news) setNews(data.news);
-        if (data.omrg) setOmrg(data.omrg);
+      const res = await fetch('/api/malta/live', { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`Malta live API returned ${res.status}`);
       }
+      const data: MaltaLiveResponse = await res.json();
+
+      const newFlights = data.aviation?.flights ?? [];
+      const newEarthquakes = data.environment?.seismic ?? [];
+      const newFires = data.environment?.fires ?? [];
+      const newNews = data.intelligence?.news ?? [];
+      const newMarine = data.maritime?.conditions ?? null;
+      const newOmrg = data.maritime?.omrg ?? null;
+
+      setFlights(newFlights);
+      setEarthquakes(newEarthquakes);
+      setFires(newFires);
+      setNews(newNews);
+      setMarineWeather(newMarine);
+      setOmrg(newOmrg);
+      setSourceMeta(data.meta?.sources ?? null);
+      setLastUpdated(data.timestamp ?? new Date().toISOString());
+
+      lastGoodDataRef.current = {
+        flights: newFlights.length ? newFlights : lastGoodDataRef.current.flights,
+        earthquakes: newEarthquakes.length ? newEarthquakes : lastGoodDataRef.current.earthquakes,
+        fires: newFires.length ? newFires : lastGoodDataRef.current.fires,
+        news: newNews.length ? newNews : lastGoodDataRef.current.news,
+        marineWeather: newMarine ?? lastGoodDataRef.current.marineWeather,
+        omrg: newOmrg ?? lastGoodDataRef.current.omrg,
+      };
     } catch (err) {
-      console.warn('Failed to fetch Malta data:', err);
+      console.error('[Malta Dashboard] Live-data fetch failed:', err);
+      const cached = lastGoodDataRef.current;
+      setFlights(cached.flights);
+      setEarthquakes(cached.earthquakes);
+      setFires(cached.fires);
+      setNews(cached.news);
+      setMarineWeather(cached.marineWeather);
+      setOmrg(cached.omrg);
     }
   }, []);
 
@@ -80,12 +107,21 @@ export default function MaltaDashboard() {
     setActiveLayers(prev => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  // Convert Map to array for rendering
   const vesselsArray = Array.from(vesselsMap.values());
+
+  const formatSourceStatus = (key: string): { label: string; color: string } => {
+    const meta = sourceMeta?.[key];
+    if (!meta) return { label: 'UNKNOWN', color: 'var(--text-muted)' };
+    switch (meta.status) {
+      case 'ok': return { label: `OK (${meta.count})`, color: 'var(--alert-green)' };
+      case 'empty': return { label: 'EMPTY', color: 'var(--alert-orange)' };
+      case 'error': return { label: 'ERROR', color: 'var(--alert-red)' };
+      case 'unconfigured': return { label: 'N/A', color: 'var(--text-muted)' };
+    }
+  };
 
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
-      {/* Splash Screen */}
       {showSplash && (
         <motion.div
           initial={{ opacity: 1 }}
@@ -112,7 +148,6 @@ export default function MaltaDashboard() {
         </motion.div>
       )}
 
-      {/* Map */}
       <MaltaMap
         data={{
           environment: {
@@ -130,10 +165,8 @@ export default function MaltaDashboard() {
         onEntityClick={setSelectedEntity}
       />
 
-      {/* Layer Panel */}
       <MaltaLayerPanel activeLayers={activeLayers} onToggle={toggleLayer} />
 
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -150,7 +183,6 @@ export default function MaltaDashboard() {
         </div>
       </motion.div>
 
-      {/* Status Bar */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -161,15 +193,20 @@ export default function MaltaDashboard() {
           <div className={`w-1.5 h-1.5 rounded-full ${
             aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
             aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
+            aisWsStatus === 'unconfigured' ? 'bg-[var(--text-muted)]' :
             'bg-[var(--alert-red)]'
           }`} />
-          <span>AIS: {aisWsStatus.toUpperCase()}</span>
+          <span>AIS: {aisWsStatus === 'unconfigured' ? 'N/A' : aisWsStatus.toUpperCase()}</span>
         </div>
         <span>VESSELS: <span className="text-[var(--cyan-primary)] font-bold">{vesselsArray.length}</span></span>
         <span>FEEDS: <span className="text-[var(--gold-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span></span>
+        {lastUpdated && (
+          <span className="text-[8px] opacity-60">
+            {new Date(lastUpdated).toLocaleTimeString()}
+          </span>
+        )}
       </motion.div>
 
-      {/* Quick Stats */}
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -177,38 +214,70 @@ export default function MaltaDashboard() {
         className="absolute top-20 right-4 z-[200] glass-panel p-3 w-48"
       >
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Ship className="w-3 h-3 text-[var(--cyan-primary)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">VESSELS</span>
-            </div>
-            <span className="text-[11px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('aviation').label}`}>
             <div className="flex items-center gap-1.5">
               <Plane className="w-3 h-3 text-[var(--gold-primary)]" />
               <span className="text-[9px] font-mono text-[var(--text-muted)]">FLIGHTS</span>
             </div>
-            <span className="text-[11px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
+              {sourceMeta?.aviation && sourceMeta.aviation.status !== 'ok' && (
+                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('aviation').color }}>
+                  {formatSourceStatus('aviation').label}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('seismic').label}`}>
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[var(--alert-orange)]" />
               <span className="text-[9px] font-mono text-[var(--text-muted)]">EARTHQUAKES</span>
             </div>
-            <span className="text-[11px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Newspaper className="w-3 h-3 text-[var(--alert-red)]" />
+              <span className="text-[11px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
+              {sourceMeta?.seismic && sourceMeta.seismic.status !== 'ok' && (
+                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('seismic').color }}>
+                  {formatSourceStatus('seismic').label}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('fires').label}`}>
+            <div className="flex items-center gap-1.5">
+              <Activity className="w-3 h-3 text-[var(--alert-red)]" />
+              <span className="text-[9px] font-mono text-[var(--text-muted)]">FIRES</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
+              {sourceMeta?.fires && sourceMeta.fires.status !== 'ok' && (
+                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('fires').color }}>
+                  {formatSourceStatus('fires').label}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('news').label}`}>
+            <div className="flex items-center gap-1.5">
+              <Newspaper className="w-3 h-3 text-[var(--text-muted)]" />
               <span className="text-[9px] font-mono text-[var(--text-muted)]">NEWS</span>
             </div>
-            <span className="text-[11px] font-mono font-bold text-[var(--alert-red)]">{news.length}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
+              {sourceMeta?.news && sourceMeta.news.status !== 'ok' && (
+                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('news').color }}>
+                  {formatSourceStatus('news').label}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="border-t border-[var(--border-subtle)] pt-2 mt-2">
+            <div className="text-[8px] font-mono text-[var(--text-muted)] tracking-widest">
+              {lastUpdated ? `UPDATED ${new Date(lastUpdated).toLocaleTimeString()}` : 'LOADING...'}
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Refresh Button */}
       <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -219,7 +288,6 @@ export default function MaltaDashboard() {
         <RefreshCw className="w-4 h-4 text-[var(--gold-primary)]" />
       </motion.button>
 
-      {/* Entity Detail Panel */}
       {selectedEntity && (
         <motion.div
           initial={{ opacity: 0, x: 20 }}

@@ -13,30 +13,52 @@ export async function GET() {
     let fires: any[] = [];
     let source = '';
 
-    // Source 1: NASA FIRMS Open Data (Global 24h CSV) - no API key needed
-    const firmsSources = [
-      'https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_Global_24h.csv',
-      'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
-    ];
-
-    for (const url of firmsSources) {
-      try {
-        const res = await fetch(url, {
-          signal: AbortSignal.timeout(15000),
-          headers: { 'User-Agent': 'THIRD EYE-Intelligence-Platform/3.5' },
-        });
-        if (res.ok) {
-          const text = await res.text();
-          if (text && text.includes('latitude') && text.length > 200) {
-            const parsed = parseCSV(text);
-            if (parsed.length > 0) {
-              fires = parsed;
-              source = url.includes('SUOMI') ? 'NASA-FIRMS (VIIRS)' : 'NASA-FIRMS (MODIS)';
-              break;
+    // Source 1: NASA FIRMS — try API key first for authenticated access
+    const firmsApiKey = process.env.FIRMS_API_KEY;
+    if (firmsApiKey) {
+      const areaSources = [
+        { name: 'VIIRS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/VIIRS_SNPP_NRT/global/2` },
+        { name: 'MODIS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/MODIS_NRT/global/2` },
+      ];
+      for (const s of areaSources) {
+        try {
+          const res = await fetch(s.url, { signal: AbortSignal.timeout(15000) });
+          if (res.ok) {
+            const text = await res.text();
+            if (text && text.includes('latitude') && text.length > 200) {
+              const parsed = parseCSV(text);
+              if (parsed.length > 0) { fires = parsed; source = `NASA-FIRMS (${s.name}, authenticated)`; break; }
             }
           }
-        }
-      } catch { continue; }
+        } catch { continue; }
+      }
+    }
+
+    // Source 1b: Public FIRMS CSV fallback (unauthenticated)
+    if (fires.length === 0) {
+      const firmsSources = [
+        'https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_Global_24h.csv',
+        'https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv'
+      ];
+      for (const url of firmsSources) {
+        try {
+          const res = await fetch(url, {
+            signal: AbortSignal.timeout(15000),
+            headers: { 'User-Agent': 'THIRD EYE-Intelligence-Platform/3.5' },
+          });
+          if (res.ok) {
+            const text = await res.text();
+            if (text && text.includes('latitude') && text.length > 200) {
+              const parsed = parseCSV(text);
+              if (parsed.length > 0) {
+                fires = parsed;
+                source = url.includes('SUOMI') ? 'NASA-FIRMS (VIIRS)' : 'NASA-FIRMS (MODIS)';
+                break;
+              }
+            }
+          }
+        } catch { continue; }
+      }
     }
 
     // Source 2: Pull volcanoes from EONET for richer data
