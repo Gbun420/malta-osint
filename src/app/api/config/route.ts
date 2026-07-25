@@ -75,17 +75,22 @@ function patchEnvFile(raw: string, updates: Record<string, string>): string {
 }
 
 export async function GET() {
+  const values: Record<string, string> = {};
+  for (const key of EXPOSED_KEYS) {
+    values[key] = process.env[key] ?? '';
+  }
+  // If running on Vercel (no .env.local file), process.env already has the values.
+  // Local dev may have .env.local; try to overlay it for runtime edits via POST.
   try {
     const raw = readFileSync(ENV_PATH, 'utf-8');
-    const all = parseEnvFile(raw);
-    const values: Record<string, string> = {};
+    const fileVals = parseEnvFile(raw);
     for (const key of EXPOSED_KEYS) {
-      values[key] = all[key] ?? '';
+      if (fileVals[key]) values[key] = fileVals[key];
     }
-    return NextResponse.json({ values, keys: EXPOSED_KEYS });
   } catch {
-    return NextResponse.json({ error: 'Could not read .env.local' }, { status: 500 });
+    // .env.local doesn't exist (e.g. Vercel) — process.env is sufficient
   }
+  return NextResponse.json({ values, keys: EXPOSED_KEYS });
 }
 
 export async function POST(req: NextRequest) {

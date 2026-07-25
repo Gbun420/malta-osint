@@ -30,9 +30,19 @@ export default function MaltaDashboard() {
 
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [aisApiKey, setAisApiKey] = useState('');
+
+  // Fetch AIS API key from server (kept server-side, never hardcoded in client)
+  useEffect(() => {
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(data => setAisApiKey(data.values?.AIS_API_KEY || ''))
+      .catch(() => console.warn('[AIS] Failed to fetch API key'));
+  }, []);
 
   // AIS WebSocket for vessels
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
+    apiKey: aisApiKey,
     enabled: activeLayers.vessels,
   });
 

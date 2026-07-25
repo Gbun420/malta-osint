@@ -250,10 +250,11 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
         ws.send(JSON.stringify(subscriptionMessage));
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         try {
           messageCountRef.current++;
-          const msg = JSON.parse(event.data) as AISMessage;
+          const raw = event.data instanceof Blob ? await event.data.text() : event.data;
+          const msg = JSON.parse(raw) as AISMessage;
           const parsed = parseAISMessage(msg);
           
           if (parsed && parsed.lat != null && parsed.lng != null && parsed.mmsi) {
