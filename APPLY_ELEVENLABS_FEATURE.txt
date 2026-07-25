@@ -1,0 +1,46 @@
+ELEVENLABS AUDIO INTELLIGENCE — APPLY INSTRUCTIONS
+
+Repository: Gbun420/malta-osint
+Target branch: feature/elevenlabs-audio-intelligence
+Patch: elevenlabs-audio-intelligence.patch
+
+1. Save the patch in the repository root.
+2. Check out the feature branch:
+
+   git checkout feature/elevenlabs-audio-intelligence
+
+3. Apply it:
+
+   git apply --check elevenlabs-audio-intelligence.patch
+   git apply elevenlabs-audio-intelligence.patch
+
+4. Install and verify:
+
+   npm install
+   npm run lint
+   npm test
+   npm run build
+
+5. Commit:
+
+   git add .
+   git commit -m "feat: add optional ElevenLabs audio intelligence workspace"
+   git push origin feature/elevenlabs-audio-intelligence
+
+6. Configure server-side environment variables in Vercel. Do not place real keys in the repository:
+
+   ENABLE_ELEVENLABS=true
+   ELEVENLABS_API_KEY=<ROTATED_KEY>
+   ELEVENLABS_VOICE_ID=
+   ELEVENLABS_TTS_MODEL=eleven_flash_v2_5
+   ELEVENLABS_STT_MODEL=scribe_v2
+   ELEVENLABS_OUTPUT_FORMAT=mp3_44100_128
+   ELEVENLABS_MAX_CHARACTERS=5000
+   ELEVENLABS_MAX_UPLOAD_BYTES=26214400
+   ELEVENLABS_CACHE_TTL_MS=86400000
+   ELEVENLABS_CACHE_ENTRIES=20
+   AUDIO_INTELLIGENCE_RUN_KEY=<openssl rand -hex 32>
+
+7. Redeploy. Open the audio control in the top command bar or navigate directly to /audio.
+
+Security: rotate any API key previously pasted into chat before using it in production.

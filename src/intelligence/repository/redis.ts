@@ -88,10 +88,17 @@ export class RedisRepository implements IntelligenceRepository {
     const keys = await this.redis.keys(`${PREFIXES.event}*`);
     if (keys.length === 0) return { items: [], total: 0, offset: query.offset ?? 0, limit: query.limit ?? 50 };
 
-    const values = keys.length > 0 ? await this.redis.mget<[...unknown[]]>(...keys) : [];
-    let items: IntelligenceEvent[] = values
-      .filter((v): v is string => typeof v === 'string')
-      .map(v => { try { return JSON.parse(v) as IntelligenceEvent; } catch { return null; } })
+    const pipeline = this.redis.pipeline();
+    for (const k of keys) {
+      (pipeline as any).get(k);
+    }
+    const rawValues = await pipeline.exec();
+    let items: IntelligenceEvent[] = (rawValues || [])
+      .map(v => {
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'string') { try { return JSON.parse(v) as IntelligenceEvent; } catch { return null; } }
+        return v as IntelligenceEvent;
+      })
       .filter((v): v is IntelligenceEvent => v !== null);
 
     if (query.countries?.length) {
@@ -137,29 +144,38 @@ export class RedisRepository implements IntelligenceRepository {
   }
 
   async getEvent(id: string): Promise<IntelligenceEvent | null> {
-    const raw = await this.redis.get<string>(key(PREFIXES.event, id));
-    if (!raw) return null;
-    try { return JSON.parse(raw) as IntelligenceEvent; } catch { return null; }
+    const raw = await this.redis.get(key(PREFIXES.event, id));
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === 'string') { try { return JSON.parse(raw) as IntelligenceEvent; } catch { return null; } }
+    return raw as IntelligenceEvent;
   }
 
   async getEventsByCountry(code: string): Promise<IntelligenceEvent[]> {
     const keys = await this.redis.keys(`${PREFIXES.event}*`);
     if (keys.length === 0) return [];
 
-    const values = await this.redis.mget<[...unknown[]]>(...keys);
+    const pipeline = this.redis.pipeline();
+    for (const k of keys) {
+      (pipeline as any).get(k);
+    }
+    const rawValues = await pipeline.exec();
     const c = code.toLowerCase();
-    const items: IntelligenceEvent[] = values
-      .filter((v): v is string => typeof v === 'string')
-      .map(v => { try { return JSON.parse(v) as IntelligenceEvent; } catch { return null; } })
+    const items: IntelligenceEvent[] = (rawValues || [])
+      .map(v => {
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'string') { try { return JSON.parse(v) as IntelligenceEvent; } catch { return null; } }
+        return v as IntelligenceEvent;
+      })
       .filter((v): v is IntelligenceEvent => v !== null && v.countries.some(cc => cc.alpha2.toLowerCase() === c));
 
     return items.sort((a, b) => new Date(b.lastObservedAt).getTime() - new Date(a.lastObservedAt).getTime());
   }
 
   async getCountry(code: string): Promise<CountryProfile | null> {
-    const raw = await this.redis.get<string>(key(PREFIXES.country, code.toLowerCase()));
-    if (!raw) return null;
-    try { return JSON.parse(raw) as CountryProfile; } catch { return null; }
+    const raw = await this.redis.get(key(PREFIXES.country, code.toLowerCase()));
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === 'string') { try { return JSON.parse(raw) as CountryProfile; } catch { return null; } }
+    return raw as CountryProfile;
   }
 
   async upsertCountry(profile: CountryProfile): Promise<void> {
@@ -170,16 +186,24 @@ export class RedisRepository implements IntelligenceRepository {
     const keys = await this.redis.keys(`${PREFIXES.health}*`);
     if (keys.length === 0) return [];
 
-    const values = await this.redis.mget<[...unknown[]]>(...keys);
-    return values
-      .filter((v): v is string => typeof v === 'string')
-      .map(v => { try { return JSON.parse(v) as SourceHealthRecord; } catch { return null; } })
+    const pipeline = this.redis.pipeline();
+    for (const k of keys) {
+      (pipeline as any).get(k);
+    }
+    const rawValues = await pipeline.exec();
+    return (rawValues || [])
+      .map(v => {
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'string') { try { return JSON.parse(v) as SourceHealthRecord; } catch { return null; } }
+        return v as SourceHealthRecord;
+      })
       .filter((v): v is SourceHealthRecord => v !== null);
   }
 
   async getSourceHealthById(sourceId: string): Promise<SourceHealthRecord | null> {
-    const raw = await this.redis.get<string>(key(PREFIXES.health, sourceId));
-    if (!raw) return null;
-    try { return JSON.parse(raw) as SourceHealthRecord; } catch { return null; }
+    const raw = await this.redis.get(key(PREFIXES.health, sourceId));
+    if (raw === null || raw === undefined) return null;
+    if (typeof raw === 'string') { try { return JSON.parse(raw) as SourceHealthRecord; } catch { return null; } }
+    return raw as SourceHealthRecord;
   }
 }
