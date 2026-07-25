@@ -48,20 +48,37 @@
 
 Missing keys degrade cleanly (unconfigured state).
 
-## Current Phase
+## Phase 1 Complete — Foundation
 
-Phase 0 complete. Starting Phase 1.
+Created `src/intelligence/` module:
 
-## Files Changed This Session
+- `types/index.ts` — canonical `IntelligenceEvent`, `EvidenceRecord`, `ClaimRecord`, `IntelligenceEntity`, `MinisterBriefItem`, `CountryProfile`, `SourceHealthRecord`
+- `schemas/registry.ts` — Zod-style validators (`SourceCostProfile`, `IntelligenceSourceDefinition`, `AdapterResult`, `SourceHealthRecord`)
+- `schemas/api-envelope.ts` — `createEnvelope`, `createErrorEnvelope` envelope contract
+- `schemas/source-registry.ts` — 16-source registry (aviation, geospatial, maritime, news, eu-policy, diplomatic, humanitarian, multilateral, economic, sanctions)
+- `repository/index.ts` — repository abstraction (`IntelligenceRepository` interface)
+- `repository/memory.ts` — in-memory implementation + lazy `globalRepository` Proxy that ties to Redis if `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` present
+- `repository/redis.ts` — Upstash Redis-backed implementation with pipeline-friendly `mget` ↔ `pipeline.get` patterns and Object/auto-JSON parsing handling
+- `confidence/` — multi-signal confidence scoring + verification-state derivation
+- `relevance/` — Malta-relevance scoring (mentions, central-med proximity, EU binding decisions, humanitarian, sanctions, multilateral, consular, trade exposure)
+- `briefing/` — `generateBriefing` → `MinisterBriefItem[]` with `whyItMattersToMalta` + `possibleFollowUp`
+- `classification/` — keyword/heuristic categoriser into canonical category set
+- `source-health/` — `determineHealth`, `createSourceHealthRecord` (consecutive-failure breaker)
+- `licensing/` — domain-specific licence/attribution model
 
-- _None yet_
+## Phase 2 Complete — Repair Live Feeds
 
-## Tests Run
 
-- `npm run lint` — 0 errors, 40 warnings
-- `npm test` — 30/30 pass
-- `npm run build` — passes
+Created independent routes (each follows `AdapterResult` shape, records health):
 
-## Next Automatic Step
+- `GET /api/live/aviation` — OpenSky fallback chain
+- `GET /api/live/seismic` — USGS Earthquakes
+- `GET /api/live/fires` — NASA FIRMS + public fallback
+- `GET /api/live/marine` — Open-Meteo Marine
+- `GET /api/live/news` — Malta-only RSS aggregation
+- `GET /api/live/health` — aggregate operational health snapshot
 
-Phase 1: Foundation — create canonical types, Zod schemas, source registry, health model, repository abstraction, API envelope, security helpers.
+Monolithic `/api/malta/live` preserved for backward compatibility.
+
+## Phase 3 Complete — Foreign Affairs Ingestion
+

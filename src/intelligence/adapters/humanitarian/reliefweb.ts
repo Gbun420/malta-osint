@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { safeFetch } from '@/intelligence/ingestion/fetch';
 import { getSourceDefinition } from '@/intelligence/schemas/source-registry';
 import type { AdapterResult } from '@/intelligence/schemas/registry';
@@ -75,7 +76,7 @@ export async function fetchReliefWeb(): Promise<AdapterResult<IntelligenceEvent>
       const categories = classify(undefined, title + ' ' + (typeof body === 'string' ? body : ''));
       const catNames = categories.map(c => c.category);
 
-      const id = `reliefweb-${item.id || Buffer.from(link).toString('base64').slice(0, 20)}`;
+      const id = `reliefweb-${item.id || createHash('sha256').update(link).digest('hex').slice(0, 20)}`;
 
       events.push({
         id,

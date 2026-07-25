@@ -1,2 +1,3 @@
 [ 3098214ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0
 [ 3109484ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0
+[ 6504870ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0

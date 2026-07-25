@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import Parser from 'rss-parser';
 import { getSourceDefinition } from '@/intelligence/schemas/source-registry';
 import type { AdapterResult } from '@/intelligence/schemas/registry';
@@ -42,7 +43,7 @@ export async function fetchUNNews(): Promise<AdapterResult<IntelligenceEvent>> {
         const categories = classify(undefined, content + ' ' + title);
         const catNames = categories.map(c => c.category);
 
-        const id = `un-${Buffer.from(link).toString('base64').slice(0, 20)}`;
+        const id = `un-${createHash('sha256').update(link).digest('hex').slice(0, 20)}`;
 
         events.push({
           id,

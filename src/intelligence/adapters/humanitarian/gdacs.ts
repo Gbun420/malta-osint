@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import Parser from 'rss-parser';
 import { getSourceDefinition } from '@/intelligence/schemas/source-registry';
 import type { AdapterResult } from '@/intelligence/schemas/registry';
@@ -51,7 +52,7 @@ export async function fetchGDACS(): Promise<AdapterResult<IntelligenceEvent>> {
         const gdacsCategory = CATEGORY_MAP[catNames.find(c => c in CATEGORY_MAP) || ''] || 'natural-disaster';
         const allCats = [...new Set([...(catNames as string[]), gdacsCategory])];
 
-        const id = `gdacs-${Buffer.from(link).toString('base64').slice(0, 20)}`;
+        const id = `gdacs-${createHash('sha256').update(link).digest('hex').slice(0, 20)}`;
 
         events.push({
           id,

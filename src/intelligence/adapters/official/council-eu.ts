@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import Parser from 'rss-parser';
 import type { AdapterResult } from '@/intelligence/schemas/registry';
 import type { IntelligenceEvent } from '@/intelligence/types';
@@ -40,7 +41,7 @@ export async function fetchCouncilEU(): Promise<AdapterResult<IntelligenceEvent>
         const catNames = categories.map(c => c.category);
         const allCats = catNames.length ? [...new Set([...catNames, 'eu-policy'])] : ['eu-policy'];
 
-        const id = `eu-pc-${Buffer.from(link).toString('base64').slice(0, 20)}`;
+        const id = `eu-pc-${createHash('sha256').update(link).digest('hex').slice(0, 20)}`;
 
         events.push({
           id,
