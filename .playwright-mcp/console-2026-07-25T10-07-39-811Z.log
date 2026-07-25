@@ -1,0 +1,10 @@
+[    1013ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://malta-osint.vercel.app/_next/static/chunks/2gkx58v2xk426.js:0
+[    1013ms] [ERROR] Refused to execute script from 'https://malta-osint.vercel.app/_next/static/chunks/2gkx58v2xk426.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled. @ https://malta-osint.vercel.app/:0
+[    1019ms] [ERROR] ChunkLoadError: Failed to load chunk /_next/static/chunks/2gkx58v2xk426.js from module 50449
+    at https://malta-osint.vercel.app/_next/static/chunks/turbopack-0qrkbxlwh7ycc.js:1:6063
+    at async Promise.all (index 0) @ https://malta-osint.vercel.app/_next/static/chunks/3hdj40qmts5sf.js:0
+[    1019ms] [ERROR] [THIRD EYE] Third Eye Core Error: ChunkLoadError: Failed to load chunk /_next/static/chunks/2gkx58v2xk426.js from module 50449
+    at https://malta-osint.vercel.app/_next/static/chunks/turbopack-0qrkbxlwh7ycc.js:1:6063
+    at async Promise.all (index 0) {componentStack: 
+    at Lazy (<anonymous>)
+    at s (https://malta…pp/_next/static/chunks/3hdj40qmts5sf.js:1:226012)} @ https://malta-osint.vercel.app/_next/static/chunks/1_hhi47g1ze1m.js:0

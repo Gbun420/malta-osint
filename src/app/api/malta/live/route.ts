@@ -9,9 +9,6 @@ const ADSB_LOL_REGIONS = [
 
 const MALTA_MED_BBOX = { north: 37, south: 34, east: 16, west: 12 };
 
-const FIRMS_MEDITERRANEAN_BBOX = { north: 47, south: 30, east: 37, west: -10 };
-const FIRMS_MEDITERRANEAN_BBOX_STR = '30,-10,47,37';
-
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -118,9 +115,9 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
   });
 
   const feedConfigs = [
-    { name: 'Times of Malta', url: 'https://timesofmalta.com/rss.xml' },
-    { name: 'MaltaToday', url: 'https://www.maltatoday.com.mt/rss' },
-    { name: 'TVM News', url: 'https://tvm.com.mt/rss' },
+    { name: 'Lovin Malta', url: 'https://lovinmalta.com/feed/' },
+    { name: 'Newsbook', url: 'https://newsbook.com.mt/feed/' },
+    { name: 'TVM News', url: 'https://tvmnews.mt/feed/' },
   ];
 
   const allItems: MaltaNewsArticle[] = [];

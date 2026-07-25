@@ -20,9 +20,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // OpenNext build artifacts
+    ".open-next/**",
+    "functions/**",
     // Repository utility scripts use CommonJS intentionally.
     "*.js",
     "scripts/**/*.js",
+    "scanner/**/*.js",
   ]),
 ]);
 

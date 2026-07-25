@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { Ship, Plane, Waves, Newspaper, Activity, RefreshCw } from 'lucide-react';
+import { Ship, Plane, Activity, Newspaper, RefreshCw } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
@@ -23,28 +23,23 @@ export default function MaltaDashboard() {
   });
 
   const [flights, setFlights] = useState<any[]>([]);
-  const [marineWeather, setMarineWeather] = useState<any>(null);
   const [earthquakes, setEarthquakes] = useState<any[]>([]);
   const [fires, setFires] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
-  const [omrg, setOmrg] = useState<any>(null);
   const [sourceMeta, setSourceMeta] = useState<Record<string, SourceMeta> | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const lastGoodDataRef = useRef<{
-    flights: any[];
-    earthquakes: any[];
-    fires: any[];
-    news: any[];
-    marineWeather: any;
-    omrg: any;
-  }>({ flights: [], earthquakes: [], fires: [], news: [], marineWeather: null, omrg: null });
+  const lastGoodDataRef = useRef({
+    flights: [] as any[],
+    earthquakes: [] as any[],
+    fires: [] as any[],
+    news: [] as any[],
+  });
 
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
 
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
-    apiKey: '',
     enabled: activeLayers.vessels,
   });
 
@@ -65,15 +60,11 @@ export default function MaltaDashboard() {
       const newEarthquakes = data.environment?.seismic ?? [];
       const newFires = data.environment?.fires ?? [];
       const newNews = data.intelligence?.news ?? [];
-      const newMarine = data.maritime?.conditions ?? null;
-      const newOmrg = data.maritime?.omrg ?? null;
 
       setFlights(newFlights);
       setEarthquakes(newEarthquakes);
       setFires(newFires);
       setNews(newNews);
-      setMarineWeather(newMarine);
-      setOmrg(newOmrg);
       setSourceMeta(data.meta?.sources ?? null);
       setLastUpdated(data.timestamp ?? new Date().toISOString());
 
@@ -82,8 +73,6 @@ export default function MaltaDashboard() {
         earthquakes: newEarthquakes.length ? newEarthquakes : lastGoodDataRef.current.earthquakes,
         fires: newFires.length ? newFires : lastGoodDataRef.current.fires,
         news: newNews.length ? newNews : lastGoodDataRef.current.news,
-        marineWeather: newMarine ?? lastGoodDataRef.current.marineWeather,
-        omrg: newOmrg ?? lastGoodDataRef.current.omrg,
       };
     } catch (err) {
       console.error('[Malta Dashboard] Live-data fetch failed:', err);
@@ -92,8 +81,6 @@ export default function MaltaDashboard() {
       setEarthquakes(cached.earthquakes);
       setFires(cached.fires);
       setNews(cached.news);
-      setMarineWeather(cached.marineWeather);
-      setOmrg(cached.omrg);
     }
   }, []);
 
@@ -193,10 +180,9 @@ export default function MaltaDashboard() {
           <div className={`w-1.5 h-1.5 rounded-full ${
             aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
             aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
-            aisWsStatus === 'unconfigured' ? 'bg-[var(--text-muted)]' :
             'bg-[var(--alert-red)]'
           }`} />
-          <span>AIS: {aisWsStatus === 'unconfigured' ? 'N/A' : aisWsStatus.toUpperCase()}</span>
+          <span>AIS: {aisWsStatus === 'disabled' ? 'N/A' : aisWsStatus.toUpperCase()}</span>
         </div>
         <span>VESSELS: <span className="text-[var(--cyan-primary)] font-bold">{vesselsArray.length}</span></span>
         <span>FEEDS: <span className="text-[var(--gold-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span></span>
@@ -214,6 +200,13 @@ export default function MaltaDashboard() {
         className="absolute top-20 right-4 z-[200] glass-panel p-3 w-48"
       >
         <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Ship className="w-3 h-3 text-[var(--cyan-primary)]" />
+              <span className="text-[9px] font-mono text-[var(--text-muted)]">VESSELS</span>
+            </div>
+            <span className="text-[11px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
+          </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('aviation').label}`}>
             <div className="flex items-center gap-1.5">
               <Plane className="w-3 h-3 text-[var(--gold-primary)]" />

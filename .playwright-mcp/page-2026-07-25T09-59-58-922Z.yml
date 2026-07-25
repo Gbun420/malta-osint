@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - heading "MALTA OSINT" [level=1] [ref=e8]
+      - paragraph [ref=e9]: INITIALIZING SYSTEMS...
+    - generic [ref=e10]:
+      - generic:
+        - generic: "AIS: OFFLINE"
+        - generic: "0"
+      - region "Map" [ref=e11]
+    - generic [ref=e12]:
+      - generic [ref=e14]:
+        - generic [ref=e15]: LAYER CONTROL
+        - generic [ref=e16]: 3 ACTIVE
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - button "MARITIME" [ref=e19]
+          - generic [ref=e27]:
+            - button "AIS Vessels" [ref=e28]
+            - button "OMRG Ocean Data" [ref=e38]
+        - generic [ref=e52]:
+          - button "AVIATION" [ref=e53]
+          - button "ADS-B Flights" [ref=e60]
+        - generic [ref=e70]:
+          - button "ENVIRONMENT" [ref=e71]
+          - generic [ref=e77]:
+            - button "Marine Weather" [ref=e78]
+            - button "Seismic Activity" [ref=e88]
+            - button "Active Fires" [ref=e96]
+        - generic [ref=e106]:
+          - button "INTELLIGENCE" [ref=e107]
+          - button "Malta News" [ref=e115]
+    - generic:
+      - generic:
+        - heading "MALTA OSINT" [level=1]
+        - generic: LIVE INTELLIGENCE
+    - generic:
+      - generic: "AIS: CONNECTING"
+      - generic: "VESSELS: 0"
+      - generic: "FEEDS: 3"
+      - generic: 11:59:31 AM
+    - generic [ref=e125]:
+      - generic [ref=e126]:
+        - generic [ref=e127]: VESSELS
+        - generic [ref=e133]: "0"
+      - 'generic "Source: OK (13)" [ref=e134]':
+        - generic [ref=e135]: FLIGHTS
+        - generic [ref=e139]: "13"
+      - 'generic "Source: EMPTY" [ref=e141]':
+        - generic [ref=e142]: EARTHQUAKES
+        - generic [ref=e146]:
+          - generic [ref=e147]: "0"
+          - generic [ref=e148]: EMPTY
+      - 'generic "Source: EMPTY" [ref=e149]':
+        - generic [ref=e150]: FIRES
+        - generic [ref=e154]:
+          - generic [ref=e155]: "0"
+          - generic [ref=e156]: EMPTY
+      - 'generic "Source: OK (22)" [ref=e157]':
+        - generic [ref=e158]: NEWS
+        - generic [ref=e163]: "22"
+      - generic [ref=e165]: UPDATED 11:59:31 AM
+    - button [ref=e167]
+  - alert [ref=e173]

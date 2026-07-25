@@ -90,27 +90,48 @@ function MaltaMap({
   // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-    
-    const styleUrl = mapStyle === 'satellite' 
-      ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-      : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+    const container = containerRef.current;
+    let destroyed = false;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: styleUrl,
-      center: [14.3754, 35.9375],
-      zoom: 9,
-      minZoom: 7,
-      maxZoom: 18,
-      attributionControl: false,
-      maxPitch: 85,
-    });
+    (async () => {
+      const isSatellite = mapStyle === 'satellite';
+      let styleSpec: any = isSatellite
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        : 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
-    map.on('load', () => {
-      mapRef.current = map;
-      
-      // Create icons
-      createVesselIcon(map, 'vessel-cargo', '#4FC3F7', 28);
+      if (!isSatellite && !destroyed) {
+        try {
+          const res = await fetch(styleSpec);
+          const json = await res.json();
+          delete json.glyphs;
+          for (const layer of (json.layers || [])) {
+            delete layer.layout?.['text-field'];
+          }
+          styleSpec = json;
+        } catch {
+          // fallback to URL
+        }
+      }
+
+      if (destroyed || !containerRef.current) return;
+
+      const map = new maplibregl.Map({
+        container: containerRef.current,
+        style: styleSpec,
+        center: [14.3754, 35.9375],
+        zoom: 9,
+        minZoom: 7,
+        maxZoom: 18,
+        attributionControl: false,
+        maxPitch: 85,
+      });
+
+      map.on('load', () => {
+        if (destroyed) return;
+        mapRef.current = map;
+
+        // Create icons
+        createVesselIcon(map, 'vessel-cargo', '#4FC3F7', 28);
       createVesselIcon(map, 'vessel-tanker', '#FF9500', 28);
       createVesselIcon(map, 'vessel-passenger', '#FF69B4', 28);
       createVesselIcon(map, 'vessel-fishing', '#00E676', 28);
@@ -375,25 +396,28 @@ function MaltaMap({
       onRightClick?.({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     });
 
-// Click for entity selection
-     map.on('click', (e) => {
-       const features = map.queryRenderedFeatures(e.point, {
-         layers: ['vessels', 'flights', 'seismic', 'fires', 'restriction-zones-fill', 'restriction-zones-line', 'ports', 'beaches', 'diving-sites']
-       });
-       if (features.length > 0) {
-         onEntityClick?.(features[0].properties);
-       }
-     });
+    // Click for entity selection
+    map.on('click', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['vessels', 'flights', 'seismic', 'fires', 'restriction-zones-fill', 'restriction-zones-line', 'ports', 'beaches', 'diving-sites']
+      });
+      if (features.length > 0) {
+        onEntityClick?.(features[0].properties);
+      }
+    });
 
     // View state changes
     map.on('moveend', () => {
       onViewStateChange?.({ zoom: map.getZoom(), latitude: map.getCenter().lat });
     });
+    })(); // end IIFE
 
-    // Cleanup
     return () => {
-      map.remove();
-      mapRef.current = null;
+      destroyed = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapStyle, createVesselIcon, createDot, onEntityClick, onMouseCoords, onRightClick, onViewStateChange]);
 

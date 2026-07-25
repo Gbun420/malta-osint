@@ -69,7 +69,7 @@ export const SHIP_TYPE_CATEGORIES = {
 
 export function getShipCategory(typeCode: number): string {
   for (const [category, codes] of Object.entries(SHIP_TYPE_CATEGORIES)) {
-    if (codes.includes(typeCode)) return category;
+    if ((codes as readonly number[]).includes(typeCode)) return category;
   }
   return 'other';
 }

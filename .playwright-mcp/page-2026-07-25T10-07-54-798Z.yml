@@ -1,0 +1,54 @@
+- generic [active] [ref=f3e1]:
+  - main [ref=f3e2]:
+    - generic [ref=f3e4]:
+      - heading "MALTA OSINT" [level=1] [ref=f3e8]
+      - paragraph [ref=f3e9]: INITIALIZING SYSTEMS...
+    - generic [ref=f3e10]:
+      - generic [ref=f3e12]:
+        - generic [ref=f3e13]: LAYER CONTROL
+        - generic [ref=f3e14]: 3 ACTIVE
+      - generic [ref=f3e15]:
+        - generic [ref=f3e16]:
+          - button "MARITIME" [ref=f3e17]
+          - generic [ref=f3e25]:
+            - button "AIS Vessels" [ref=f3e26]
+            - button "OMRG Ocean Data" [ref=f3e36]
+        - generic [ref=f3e50]:
+          - button "AVIATION" [ref=f3e51]
+          - button "ADS-B Flights" [ref=f3e58]
+        - generic [ref=f3e68]:
+          - button "ENVIRONMENT" [ref=f3e69]
+          - generic [ref=f3e75]:
+            - button "Marine Weather" [ref=f3e76]
+            - button "Seismic Activity" [ref=f3e86]
+            - button "Active Fires" [ref=f3e94]
+        - generic [ref=f3e104]:
+          - button "INTELLIGENCE" [ref=f3e105]
+          - button "Malta News" [ref=f3e113]
+    - generic:
+      - generic:
+        - heading "MALTA OSINT" [level=1]
+        - generic: LIVE INTELLIGENCE
+    - generic:
+      - generic: "AIS: CONNECTING"
+      - generic: "VESSELS: 0"
+      - generic: "FEEDS: 3"
+    - generic [ref=f3e123]:
+      - generic [ref=f3e124]:
+        - generic [ref=f3e125]: VESSELS
+        - generic [ref=f3e131]: "0"
+      - 'generic "Source: UNKNOWN" [ref=f3e132]':
+        - generic [ref=f3e133]: FLIGHTS
+        - generic [ref=f3e137]: "0"
+      - 'generic "Source: UNKNOWN" [ref=f3e139]':
+        - generic [ref=f3e140]: EARTHQUAKES
+        - generic [ref=f3e144]: "0"
+      - 'generic "Source: UNKNOWN" [ref=f3e146]':
+        - generic [ref=f3e147]: FIRES
+        - generic [ref=f3e151]: "0"
+      - 'generic "Source: UNKNOWN" [ref=f3e153]':
+        - generic [ref=f3e154]: NEWS
+        - generic [ref=f3e159]: "0"
+      - generic [ref=f3e161]: LOADING...
+    - button [ref=f3e163]
+  - alert [ref=f3e169]
