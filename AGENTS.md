@@ -28,6 +28,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `SDK_INGEST_KEY` | SDK ingest auth | ✅ Set (random) |
 | `SCANNER_URL` | Local scanner — port scanning (wired to sweep route + ngrok tunnel) | ✅ Set (dynamic — managed by launchd) |
 | `SCANNER_KEY` | Local scanner auth | ✅ Set (random) |
+| `ELEVENLABS_API_KEY` | ElevenLabs — text-to-speech (needed soon) | 🔑 `sk_df546a29387e18fb597e4574974abfb1f2ea97d9859db092` |
 
 # Local Services (LaunchAgents)
 
