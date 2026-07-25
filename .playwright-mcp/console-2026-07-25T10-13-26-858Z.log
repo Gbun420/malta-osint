@@ -1,3 +1,4 @@
 [ 3098214ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0
 [ 3109484ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0
 [ 6504870ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ https://malta-osint.vercel.app/api/ais/vessels:0
+[13543293ms] [WARNING] Expected value to be of type number, but found null instead. @ blob:https://malta-osint.vercel.app/f3caad9a-f041-4a6b-bd85-d98bd9728ff8:0

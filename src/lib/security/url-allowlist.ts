@@ -13,6 +13,7 @@ const ALLOWED_HOSTS = new Set([
   'tiles-d.basemaps.cartocdn.com',
   'server.arcgisonline.com',
   'stream.aisstream.io',
+  'api.vesselapi.com',
   'api.reliefweb.int',
   'www.gdacs.org',
   'newsbook.com.mt',
