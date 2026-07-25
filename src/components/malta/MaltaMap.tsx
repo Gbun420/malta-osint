@@ -470,7 +470,7 @@ function MaltaMap({
           category: f.category,
         },
       })) };
-      map.getSource('flights')?.setData(fc);
+      (map.getSource('flights') as maplibregl.GeoJSONSource)?.setData(fc);
     }
   }, [data, activeLayers, mapReady]);
 
