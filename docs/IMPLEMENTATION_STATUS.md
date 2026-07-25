@@ -122,6 +122,33 @@ Monolithic `/api/malta/live` preserved for backward compatibility.
 - 2 of 3 UN News sub-feeds return HTML/non-RSS — main `news.un.org` RSS works
 - No deduplication across adapters — different IDs for same story from two EU sources
 
+## Phase 4 — Intelligence Processing (In Progress)
+
+### Implemented Modules
+
+#### Deduplication (`src/intelligence/deduplication/index.ts`)
+- `deduplicate(events)` — staged deduplication producing merged clusters
+- `exactDuplicate(a, b)` — matches on canonicalKey, id
+- `probableDuplicate(a, b)` — normalized title, same event time + country overlap
+- `clusterEvents(events)` — groups events into dedup clusters
+- Handles conflicting verification states (marks cluster as `conflicting`)
+
+#### Correlation & Entity Extraction (`src/intelligence/correlation/index.ts`)
+- `extractEntities(text)` — deterministic entity extraction for organisations, governments, persons, vessels
+- `correlateEvents(events)` — finds event pairs sharing actors or countries
+- `extractCountries(text)` — ISO alpha2 country code extraction
+
+#### Validation (`src/intelligence/validation/index.ts`)
+- `validateEvent(event)` — validates single event against canonical schema
+- `validateBatch(events)` — batch validation separating valid vs invalid events
+- Validates severity range (0-5), confidence score range, maltaRelevance score range, location bounds, country codes, required timestamps
+
+### Existing (Already in Place)
+- `classification/` — keyword-based categorisation with source-native mapping
+- `confidence/` — multi-signal confidence scoring per directive spec
+- `relevance/` — Malta relevance scoring with transparent factor breakdown
+- `briefing/` — `generateBriefing` producing `MinisterBriefItem[]`
+
 ## Cleanup and Foundation Fixes (July 25)
 Removed duplicate, broken, and mock code that conflicted with the canonical architecture:
 
