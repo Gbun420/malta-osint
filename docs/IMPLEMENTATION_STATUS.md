@@ -82,3 +82,43 @@ Monolithic `/api/malta/live` preserved for backward compatibility.
 
 ## Phase 3 Complete — Foreign Affairs Ingestion
 
+### Adapters (all registered in source-registry, runnable from `runIngestion()`)
+
+| Adapter | Feed URL | Status |
+|---------|----------|--------|
+| `council-eu-rss` | `https://ec.europa.eu/commission/presscorner/api/rss?language=en` | ✅ healthy, 10 events/run |
+| `eeas` | presscorner RSS filtered `EXTERNAL_RELATIONS` + `TRADE` | ✅ healthy, 20 events/run |
+| `un-news` | `news.un.org` main + peace/security + humanitarian | ⚠️ 1/3 feeds parse, 30 events on main feed |
+| `gdacs` | `https://www.gdacs.org/rss.aspx` | ✅ healthy, 1+ events |
+| `reliefweb` | `https://api.reliefweb.int/v2/reports?appname=$RELIEFWEB_APP_NAME` | 🔲 `RELIEFWEB_APP_NAME` not set (graceful degrade) |
+
+### Pipeline
+- `src/intelligence/ingestion/pipeline.ts` — composable runner; each adapter upserts evidence + events + source-health in one pass
+- **Deterministic IDs use `sha256(link).slice(0, 20)`** (replaced base64 truncation which collapsed all EC presscorner URLs onto one ID)
+- `POST /api/intelligence/ingest/run` — runs all enabled adapters, writes to Redis-backed repository, returns per-source accepted counts and totals
+
+### Intelligence API
+- `GET /api/intelligence/events` (filters: countries, categories, minSeverity, minConfidence, minMaltaRelevance, status, timeFrom, timeTo, limit, offset)
+- `GET /api/intelligence/events/[id]` — single event detail
+- `GET /api/intelligence/brief?maxItems=20&minRelevance=0&minConfidence=0&categories=...&since=ISO`
+- `GET /api/intelligence/countries` (stub — Phase 4+)
+- `GET /api/intelligence/eu` (stub)
+- `GET /api/intelligence/economic` (stub)
+- `GET /api/intelligence/source-health` — registry merged with persisted health records (state, latency, errors, accepts)
+
+### Redis Persistence
+- `RedisRepository` selected when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are set at request time (lazy Proxy avoids Next.js serverless build-time env-var deadlocks)
+- All reads handle `@upstash/redis` automatic JSON parsing (treats parsed objects and raw strings uniformly)
+- Confirmed end-to-end persistence across separate POST/GET serverless invocations
+
+### Verified Production State
+- Ingest POST → returns 61 accepted across 5 sources
+- Subsequent GET on events → returns 54 persisted events (after deterministic-ID overlaps)
+- Source-health GET → returns real-time health snapshot for all 5 adapters
+- Brief GET → returns ranked Minister's Brief items with `whyItMattersToMalta`
+
+## Known Limitations (Phase 3)
+- `RELIEFWEB_APP_NAME` env var not set — ReliefWeb adapter returns `unconfigured` cleanly
+- 2 of 3 UN News sub-feeds return HTML/non-RSS — main `news.un.org` RSS works
+- No deduplication across adapters — different IDs for same story from two EU sources
+
