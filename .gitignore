@@ -65,3 +65,4 @@ temp_routes.txt
 
 # Claude Code local harness settings
 /.claude/
+.env*

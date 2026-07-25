@@ -212,105 +212,7 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
   const [error, setError] = useState<Error | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messageCountRef = useRef(0);
-  const mockIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const connectCallbackRef = useRef(() => {});
-
-  // Helper functions for mock AIS
-  const initializeMockVessels = (bbox: { north: number; south: number; east: number; west: number }, count: number) => {
-    const shipTypes = [0, 20, 30, 50, 60, 70, 80]; // Various type codes
-    for (let i = 0; i < count; i++) {
-      const mmsi = 200000000 + i; // Fake MMSI range
-      const lat = bbox.south + Math.random() * (bbox.north - bbox.south);
-      const lng = bbox.west + Math.random() * (bbox.east - bbox.west);
-      const sog = Math.random() * 20; // 0-20 knots
-      const cog = Math.random() * 360;
-      const typeCode = shipTypes[Math.floor(Math.random() * shipTypes.length)];
-      
-      const vessel: Vessel = {
-        mmsi,
-        name: `MOCK_VESSEL_${i}`,
-        lat,
-        lng,
-        sog,
-        cog,
-        heading: cog,
-        navStatus: Math.random() > 0.9 ? 1 : 0, // Occasionally at anchor
-        rot: 0,
-        type: getShipTypeName(typeCode),
-        dimension: { a: 10, b: 10, c: 5, d: 5 },
-        draught: Math.random() * 10,
-        destination: 'UNKNOWN',
-        eta: '',
-        callSign: `M${i}`,
-        imo: '',
-        lastUpdate: Date.now(),
-        positionAge: 0,
-      };
-      
-      vesselsRef.current.set(mmsi, vessel);
-    }
-  };
-
-  const updateMockVesselPositions = (bbox: { north: number; south: number; east: number; west: number }) => {
-    vesselsRef.current.forEach((vessel, mmsi) => {
-      // Simple random walk with some drift
-      let lat = vessel.lat;
-      let lng = vessel.lng;
-      
-      // Convert speed from knots to degrees per second (approx)
-      const speedLat = (vessel.sog * 0.0146) * Math.cos((vessel.cog * Math.PI) / 180); // 1 knot = 0.0146 deg/sec lat deg/sec
-      const speedLng = (vessel.sog * 0.0146) * Math.sin((vessel.cog * Math.PI) / 180) / Math.cos((lat * Math.PI) / 180);
-      
-      // Update position based on 2 second interval
-      lat += speedLat * 2;
-      lng += speedLng * 2;
-      
-      // Bounce off boundaries
-      if (lat < bbox.south) { lat = bbox.south; vessel.cog = (vessel.cog + 180) % 360; }
-      if (lat > bbox.north) { lat = bbox.north; vessel.cog = (vessel.cog + 180) % 360; }
-      if (lng < bbox.west) { lng = bbox.west; vessel.cog = (vessel.cog + 180) % 360; }
-      if (lng > bbox.east) { lng = bbox.east; vessel.cog = (vessel.cog + 180) % 360; }
-      
-      // Occasionally change course
-      if (Math.random() < 0.05) {
-        vessel.cog = (vessel.cog + (Math.random() - 0.5) * 60) % 360;
-      }
-      
-      // Occasionally change speed
-      if (Math.random() < 0.02) {
-        vessel.sog = Math.max(0, vessel.sog + (Math.random() - 0.5) * 4);
-      }
-      
-      vessel.lat = lat;
-      vessel.lng = lng;
-      vessel.lastUpdate = Date.now();
-      
-      // Update the vessel in the map
-      vesselsRef.current.set(mmsi, { ...vessel });
-    });
-  };
-
-  const startMockAIS = useCallback((bbox: { north: number; south: number; east: number; west: number }, maxVessels: number, onVesselUpdate: ((vessel: Vessel) => void) | undefined) => {
-    // Clear any existing interval
-    if (mockIntervalRef.current) {
-      clearInterval(mockIntervalRef.current);
-    }
-    
-    // Initialize some mock vessels if none exist
-    if (vesselsRef.current.size === 0) {
-      initializeMockVessels(bbox, 30); // Start with 30 vessels
-    }
-    
-    // Update positions every 2 seconds
-    mockIntervalRef.current = setInterval(() => {
-      updateMockVesselPositions(bbox);
-      // Notify subscribers
-      vesselsRef.current.forEach((vessel) => {
-        onVesselUpdate?.(vessel);
-      });
-      setVesselCount(vesselsRef.current.size);
-    }, 2000);
-  }, [onVesselUpdate]);
 
   const cleanup = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -321,30 +223,12 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
       wsRef.current.close();
       wsRef.current = null;
     }
-    if (mockIntervalRef.current) {
-      clearInterval(mockIntervalRef.current);
-      mockIntervalRef.current = null;
-    }
     setIsConnected(false);
   }, []);
 
   // Define connect function and keep it in a ref for use in timeouts
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-    // If no API key provided, switch to mock mode
-    if (!apiKey) {
-      console.log('[AIS] No API key provided, using mock AIS data');
-      // Clear any existing WebSocket
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      setIsConnected(true);
-      setError(null);
-      startMockAIS(bbox, maxVessels, onVesselUpdate);
-      return;
-    }
 
     try {
       const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
@@ -420,7 +304,7 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
         connectCallbackRef.current();
       }, 5000);
     }
-  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels, startMockAIS]);
+  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels]);
 
   // Keep the ref up to date
   useEffect(() => {
