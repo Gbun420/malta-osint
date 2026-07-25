@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 const SITE_URL = "https://malta-osint.pages.dev";
-const SITE_NAME = "Malta OSINT";
-const SITE_TITLE = "Malta OSINT — Live Maritime, Aviation & Intelligence Dashboard";
-const SITE_DESCRIPTION = "Real-time OSINT dashboard for Malta. Track AIS vessels, ADS-B flights, marine weather, seismic activity, and local news. Powered by open data sources.";
+const SITE_NAME = "Third Eye";
+const SITE_TITLE = "Third Eye — Global Intelligence Platform";
+const SITE_DESCRIPTION = "Real-time OSINT dashboard for global intelligence. Track vessels, flights, satellites, seismic activity, wildfires, and cyber threats worldwide. Powered by open data sources.";
 
 export const viewport: Viewport = {
   themeColor: "#D4AF37",

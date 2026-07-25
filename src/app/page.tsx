@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { Ship, Plane, Activity, Newspaper, RefreshCw } from 'lucide-react';
+import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
+import SmartSystemPanel from '@/components/SmartSystemPanel';
 import type { MaltaLiveResponse, SourceMeta } from '@/lib/malta-live-types';
 
 const MaltaMap = dynamic(() => import('@/components/malta/MaltaMap'), { ssr: false });
@@ -38,6 +39,7 @@ export default function MaltaDashboard() {
 
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [showSmartSystem, setShowSmartSystem] = useState(false);
 
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
     enabled: activeLayers.vessels,
@@ -75,7 +77,7 @@ export default function MaltaDashboard() {
         news: newNews.length ? newNews : lastGoodDataRef.current.news,
       };
     } catch (err) {
-      console.error('[Malta Dashboard] Live-data fetch failed:', err);
+      console.error('[Third Eye] Live-data fetch failed:', err);
       const cached = lastGoodDataRef.current;
       setFlights(cached.flights);
       setEarthquakes(cached.earthquakes);
@@ -107,6 +109,10 @@ export default function MaltaDashboard() {
     }
   };
 
+  const timeStr = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString('en-US', { hour12: false })
+    : '--:--:--';
+
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
       {showSplash && (
@@ -116,22 +122,20 @@ export default function MaltaDashboard() {
           transition={{ duration: 0.8 }}
           className="absolute inset-0 z-[999] flex flex-col items-center justify-center bg-[var(--bg-void)]"
         >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-[var(--gold-primary)] flex items-center justify-center">
-              <Activity className="w-8 h-8 text-[var(--gold-primary)]" />
-            </div>
-            <h1 className="text-xl font-bold tracking-[0.4em] text-[var(--gold-primary)] font-mono mb-2">
-              MALTA OSINT
-            </h1>
-            <p className="text-[10px] font-mono tracking-[0.3em] text-[var(--text-muted)]">
-              INITIALIZING SYSTEMS...
-            </p>
-          </motion.div>
+          <div className="relative flex items-center justify-center mb-8">
+            <div className="splash-ring splash-ring--outer" />
+            <div className="splash-ring splash-ring--mid" />
+            <div className="splash-ring splash-ring--inner" />
+            <div className="splash-ring splash-ring--core" />
+          </div>
+          <div className="splash-scanline" />
+          <h1 className="text-xl font-bold tracking-[0.4em] text-[var(--gold-primary)] font-mono mb-3 gotham-enter">
+            THIRD EYE
+          </h1>
+          <div className="w-48 splash-progress-bar mb-3" />
+          <p className="text-[10px] font-mono tracking-[0.3em] text-[var(--text-muted)] gotham-enter gotham-enter-delay-1">
+            GLOBAL INTELLIGENCE PLATFORM
+          </p>
         </motion.div>
       )}
 
@@ -152,134 +156,105 @@ export default function MaltaDashboard() {
         onEntityClick={setSelectedEntity}
       />
 
+      <header className="absolute top-0 left-0 right-0 z-[300] gotham-command-bar">
+        <div className="gotham-command-bar__section">
+          <span className="gotham-command-bar__title">THIRD EYE</span>
+          <span className="text-[9px] text-[var(--text-muted)] font-mono tracking-[0.15em]">
+            GLOBAL INTELLIGENCE
+          </span>
+        </div>
+        <div className="gotham-command-bar__section">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
+              aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
+              'bg-[var(--alert-red)]'
+            }`} />
+            <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+              AIS: {aisWsStatus === 'disabled' ? 'N/A' : aisWsStatus.toUpperCase()}
+            </span>
+          </div>
+          <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+            VESSELS: <span className="text-[var(--cyan-primary)]">{vesselsArray.length}</span>
+          </span>
+          <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+            FEEDS: <span className="text-[var(--gold-primary)]">{Object.values(activeLayers).filter(Boolean).length}</span>
+          </span>
+          <span className="text-[9px] font-mono text-[var(--text-muted)] tabular-nums">{timeStr} UTC</span>
+          <button
+            onClick={() => setShowSmartSystem(s => !s)}
+            className={`gotham-command-bar__action ${showSmartSystem ? '!border-[var(--gold-primary)] !text-[var(--gold-primary)] !shadow-[0_0_12px_rgba(212,175,55,0.15)]' : ''}`}
+            title="Smart System AI"
+          >
+            <Zap className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={fetchMaltaData}
+            className="gotham-command-bar__action"
+            title="Refresh data"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </header>
+
       <MaltaLayerPanel activeLayers={activeLayers} onToggle={toggleLayer} />
 
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="absolute top-4 left-4 z-[200] pointer-events-none"
-      >
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-xl font-bold tracking-[0.4em] text-[var(--gold-primary)] font-mono">
-            MALTA OSINT
-          </h1>
-          <span className="text-[10px] text-[var(--text-muted)] font-mono tracking-[0.15em]">
-            LIVE INTELLIGENCE
-          </span>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="absolute top-4 right-4 z-[200] pointer-events-none flex items-center gap-4 text-[9px] font-mono tracking-widest text-[var(--text-muted)]"
-      >
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${
-            aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
-            aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
-            'bg-[var(--alert-red)]'
-          }`} />
-          <span>AIS: {aisWsStatus === 'disabled' ? 'N/A' : aisWsStatus.toUpperCase()}</span>
-        </div>
-        <span>VESSELS: <span className="text-[var(--cyan-primary)] font-bold">{vesselsArray.length}</span></span>
-        <span>FEEDS: <span className="text-[var(--gold-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span></span>
-        {lastUpdated && (
-          <span className="text-[8px] opacity-60">
-            {new Date(lastUpdated).toLocaleTimeString()}
-          </span>
-        )}
-      </motion.div>
-
-      <motion.div
+      <motion.aside
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.7 }}
-        className="absolute top-20 right-4 z-[200] glass-panel p-3 w-48"
+        className="absolute top-[60px] right-4 z-[200] glass-panel p-3 w-52"
       >
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Ship className="w-3 h-3 text-[var(--cyan-primary)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">VESSELS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">VESSELS</span>
             </div>
-            <span className="text-[11px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
+            <span className="text-[13px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('aviation').label}`}>
             <div className="flex items-center gap-1.5">
               <Plane className="w-3 h-3 text-[var(--gold-primary)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">FLIGHTS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">FLIGHTS</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
-              {sourceMeta?.aviation && sourceMeta.aviation.status !== 'ok' && (
-                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('aviation').color }}>
-                  {formatSourceStatus('aviation').label}
-                </span>
-              )}
-            </div>
+            <span className="text-[13px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('seismic').label}`}>
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[var(--alert-orange)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">EARTHQUAKES</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">SEISMIC</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
-              {sourceMeta?.seismic && sourceMeta.seismic.status !== 'ok' && (
-                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('seismic').color }}>
-                  {formatSourceStatus('seismic').label}
-                </span>
-              )}
-            </div>
+            <span className="text-[13px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('fires').label}`}>
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[var(--alert-red)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">FIRES</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">FIRES</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
-              {sourceMeta?.fires && sourceMeta.fires.status !== 'ok' && (
-                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('fires').color }}>
-                  {formatSourceStatus('fires').label}
-                </span>
-              )}
-            </div>
+            <span className="text-[13px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('news').label}`}>
             <div className="flex items-center gap-1.5">
               <Newspaper className="w-3 h-3 text-[var(--text-muted)]" />
-              <span className="text-[9px] font-mono text-[var(--text-muted)]">NEWS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">NEWS</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
-              {sourceMeta?.news && sourceMeta.news.status !== 'ok' && (
-                <span className="text-[7px] font-mono px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-surface)', color: formatSourceStatus('news').color }}>
-                  {formatSourceStatus('news').label}
-                </span>
-              )}
-            </div>
+            <span className="text-[13px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
           </div>
-          <div className="border-t border-[var(--border-subtle)] pt-2 mt-2">
+          <div className="border-t border-[var(--border-secondary)] pt-2 mt-2">
             <div className="text-[8px] font-mono text-[var(--text-muted)] tracking-widest">
-              {lastUpdated ? `UPDATED ${new Date(lastUpdated).toLocaleTimeString()}` : 'LOADING...'}
+              UPDATED {timeStr} UTC
             </div>
           </div>
         </div>
-      </motion.div>
+      </motion.aside>
 
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        onClick={fetchMaltaData}
-        className="absolute bottom-4 right-4 z-[200] glass-panel p-3 hover:border-[var(--gold-primary)]/40 transition-colors"
-      >
-        <RefreshCw className="w-4 h-4 text-[var(--gold-primary)]" />
-      </motion.button>
+      {showSmartSystem && (
+        <div className="absolute top-[60px] right-4 z-[250]" style={{ width: '340px' }}>
+          <SmartSystemPanel />
+        </div>
+      )}
 
       {selectedEntity && (
         <motion.div
@@ -323,6 +298,24 @@ export default function MaltaDashboard() {
             )}
           </div>
         </motion.div>
+      )}
+
+      {news.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 z-[200] glass-panel-sm rounded-none border-x-0 border-b-0 px-4 py-1.5 overflow-hidden pointer-events-none">
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-[8px] font-mono tracking-[0.2em] text-[var(--gold-primary)]">NEWS</span>
+            <div className="overflow-hidden flex-1">
+              <div className="animate-ticker flex gap-12 whitespace-nowrap">
+                <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                  {news.map((a: any) => a.title).filter(Boolean).join('  ●  ')}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                  {news.map((a: any) => a.title).filter(Boolean).join('  ●  ')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

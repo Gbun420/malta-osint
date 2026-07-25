@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
-import { MALTA_BBOX, MALTA_FIR_BBOX, isInMaltaBbox, isInMaltaFir } from '@/lib/malta/bbox';
+import { MALTA_BBOX, MALTA_FIR_BBOX, isInMaltaBbox } from '@/lib/malta/bbox';
 import type { MaltaLiveResponse, SourceMeta, MaltaFlight, FireEvent, SeismicEvent } from '@/lib/malta-live-types';
+import { createKvClient, isKvConfigured } from '@/smart_system/persistence/kv';
 
 const ADSB_LOL_REGIONS = [
   { lat: 35.9, lon: 14.4, dist: 250 },
+  { lat: 48.8, lon: 2.3, dist: 300 },
+  { lat: 40.7, lon: -74.0, dist: 300 },
+  { lat: 25.2, lon: 55.3, dist: 300 },
+  { lat: 35.7, lon: 139.7, dist: 300 },
+  { lat: -33.8, lon: 151.2, dist: 300 },
 ];
 
 const MALTA_MED_BBOX = { north: 37, south: 34, east: 16, west: 12 };
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(id);
+    return await fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') {
+      console.warn(`[Third Eye] Fetch timeout: ${url.slice(0, 80)}`);
+    }
+    throw e;
   }
 }
 
@@ -51,7 +58,7 @@ async function fetchMaltaFlights(): Promise<{ flights: MaltaFlight[]; meta: Sour
           const hex = (ac.hex || '').toLowerCase().trim();
           if (hex && !seenHex.has(hex)) {
             seenHex.add(hex);
-            if (ac.lat != null && ac.lon != null && isInMaltaFir(ac.lat, ac.lon)) {
+            if (ac.lat != null && ac.lon != null) {
               allAircraft.push({
                 hex,
                 flight: ac.flight?.trim() || '',
@@ -126,12 +133,19 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
   for (const feed of feedConfigs) {
     try {
       const parsed = await parser.parseURL(feed.url);
+      if (!parsed.items?.length) {
+        console.warn(`[Third Eye] ${feed.name} returned 0 items — retrying once`);
+        const retry = await parser.parseURL(feed.url);
+        parsed.items = retry.items || [];
+      }
       for (const item of parsed.items || []) {
+        const title = (item.title || '').trim();
+        if (!title) continue;
         const guid = item.guid || item.link || '';
         if (guid && seenGuids.has(guid)) continue;
         if (guid) seenGuids.add(guid);
         allItems.push({
-          title: item.title || '',
+          title,
           description: item.contentSnippet || item.content || '',
           link: item.link || '',
           pubDate: item.isoDate || item.pubDate || '',
@@ -140,7 +154,7 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
         });
       }
     } catch (e) {
-      console.warn(`[Malta API] Failed to fetch ${feed.name}:`, e instanceof Error ? e.message : e);
+      console.warn(`[Third Eye] Failed to fetch ${feed.name}:`, e instanceof Error ? e.message : e);
     }
   }
 
@@ -167,10 +181,6 @@ async function fetchSeismicData(): Promise<{ seismic: SeismicEvent[]; meta: Sour
     const data = await res.json();
 
     const events = (data.features || [])
-      .filter((f: any) => {
-        const coords = f.geometry?.coordinates;
-        return coords && isInMaltaBbox(coords[1], coords[0], MALTA_MED_BBOX);
-      })
       .map((f: any) => ({
         id: f.id,
         lat: f.geometry.coordinates[1],
@@ -221,9 +231,8 @@ async function fetchFiresData(): Promise<{ fires: FireEvent[]; meta: SourceMeta 
         const text = await res.text();
         if (text && text.includes('latitude') && text.length > 200) {
           const parsed = parseFIRMSCSV(text);
-          const filtered = parsed.filter(f => isInMaltaBbox(f.lat, f.lng, MALTA_MED_BBOX));
-          if (filtered.length > 0) {
-            fires = filtered;
+          if (parsed.length > 0) {
+            fires = parsed;
             sourceUsed = s.name;
             break;
           }
@@ -285,6 +294,29 @@ async function fetchStaticMaritimeZones() {
 }
 
 export async function GET() {
+  const kv = createKvClient();
+
+  if (kv) {
+    try {
+      const cached = await kv.get('live:response');
+      if (cached) {
+        const parsed = JSON.parse(cached) as MaltaLiveResponse;
+        const age = Date.now() - new Date(parsed.timestamp).getTime();
+        if (age < 15000) {
+          return NextResponse.json(parsed, {
+            headers: {
+              'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=45',
+              'Access-Control-Allow-Origin': '*',
+              'X-Cache': 'HIT',
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[Third Eye] KV cache read failed:', e);
+    }
+  }
+
   try {
     const [
       flightsResult,
@@ -343,14 +375,21 @@ export async function GET() {
       },
     };
 
+    if (kv) {
+      kv.set('live:response', JSON.stringify(response)).catch((e: Error) =>
+        console.warn('[Third Eye] KV cache write failed:', e.message)
+      );
+    }
+
     return NextResponse.json(response, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=45',
         'Access-Control-Allow-Origin': '*',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {
-    console.error('[Malta API] Live data error:', error);
+    console.error('[Third Eye] Live data error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch live data', timestamp: new Date().toISOString() },
       { status: 500 }
