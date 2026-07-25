@@ -375,15 +375,15 @@ function MaltaMap({
       onRightClick?.({ lat: e.lngLat.lat, lng: e.lngLat.lng });
     });
 
-    // Click for entity selection
-    map.on('click', (e) => {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: ['vessels', 'flights', 'seismic', 'fires', 'restriction-zones', 'ports', 'beaches', 'diving-sites']
-      });
-      if (features.length > 0) {
-        onEntityClick?.(features[0].properties);
-      }
-    });
+// Click for entity selection
+     map.on('click', (e) => {
+       const features = map.queryRenderedFeatures(e.point, {
+         layers: ['vessels', 'flights', 'seismic', 'fires', 'restriction-zones-fill', 'restriction-zones-line', 'ports', 'beaches', 'diving-sites']
+       });
+       if (features.length > 0) {
+         onEntityClick?.(features[0].properties);
+       }
+     });
 
     // View state changes
     map.on('moveend', () => {

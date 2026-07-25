@@ -8,7 +8,6 @@ NEXT_PUBLIC_MAP_CENTER_LAT = "35.9375"
 NEXT_PUBLIC_MAP_CENTER_LNG = "14.3754"
 NEXT_PUBLIC_MAP_ZOOM = "9"
 NEXT_PUBLIC_DEFAULT_LAYERS = "maritime,aviation,weather,earthquakes,news"
-AIS_API_KEY = "db7215264992501594c945094c973a0d42e99902"
 
 [assets]
 directory = ".open-next/assets"

@@ -181,6 +181,7 @@ interface UseAISStreamOptions {
   onVesselUpdate?: (vessel: Vessel) => void;
   onError?: (error: Error) => void;
   maxVessels?: number;
+  enabled?: boolean;
 }
 
 interface UseAISStreamReturn {
@@ -188,17 +189,20 @@ interface UseAISStreamReturn {
   vesselCount: number;
   isConnected: boolean;
   error: Error | null;
+  status: 'connecting' | 'connected' | 'error' | 'disabled';
   connect: () => void;
   disconnect: () => void;
 }
 
 export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamReturn {
+  console.log('[useAISSTREAM HOOK] Called with options:', options);
   const {
     bbox = MALTA_BBOX,
     apiKey = '',
     onVesselUpdate,
     onError,
     maxVessels = 5000,
+    enabled = true,
   } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -208,6 +212,105 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
   const [error, setError] = useState<Error | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messageCountRef = useRef(0);
+  const mockIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const connectCallbackRef = useRef(() => {});
+
+  // Helper functions for mock AIS
+  const initializeMockVessels = (bbox: { north: number; south: number; east: number; west: number }, count: number) => {
+    const shipTypes = [0, 20, 30, 50, 60, 70, 80]; // Various type codes
+    for (let i = 0; i < count; i++) {
+      const mmsi = 200000000 + i; // Fake MMSI range
+      const lat = bbox.south + Math.random() * (bbox.north - bbox.south);
+      const lng = bbox.west + Math.random() * (bbox.east - bbox.west);
+      const sog = Math.random() * 20; // 0-20 knots
+      const cog = Math.random() * 360;
+      const typeCode = shipTypes[Math.floor(Math.random() * shipTypes.length)];
+      
+      const vessel: Vessel = {
+        mmsi,
+        name: `MOCK_VESSEL_${i}`,
+        lat,
+        lng,
+        sog,
+        cog,
+        heading: cog,
+        navStatus: Math.random() > 0.9 ? 1 : 0, // Occasionally at anchor
+        rot: 0,
+        type: getShipTypeName(typeCode),
+        dimension: { a: 10, b: 10, c: 5, d: 5 },
+        draught: Math.random() * 10,
+        destination: 'UNKNOWN',
+        eta: '',
+        callSign: `M${i}`,
+        imo: '',
+        lastUpdate: Date.now(),
+        positionAge: 0,
+      };
+      
+      vesselsRef.current.set(mmsi, vessel);
+    }
+  };
+
+  const updateMockVesselPositions = (bbox: { north: number; south: number; east: number; west: number }) => {
+    vesselsRef.current.forEach((vessel, mmsi) => {
+      // Simple random walk with some drift
+      let lat = vessel.lat;
+      let lng = vessel.lng;
+      
+      // Convert speed from knots to degrees per second (approx)
+      const speedLat = (vessel.sog * 0.0146) * Math.cos((vessel.cog * Math.PI) / 180); // 1 knot = 0.0146 deg/sec lat deg/sec
+      const speedLng = (vessel.sog * 0.0146) * Math.sin((vessel.cog * Math.PI) / 180) / Math.cos((lat * Math.PI) / 180);
+      
+      // Update position based on 2 second interval
+      lat += speedLat * 2;
+      lng += speedLng * 2;
+      
+      // Bounce off boundaries
+      if (lat < bbox.south) { lat = bbox.south; vessel.cog = (vessel.cog + 180) % 360; }
+      if (lat > bbox.north) { lat = bbox.north; vessel.cog = (vessel.cog + 180) % 360; }
+      if (lng < bbox.west) { lng = bbox.west; vessel.cog = (vessel.cog + 180) % 360; }
+      if (lng > bbox.east) { lng = bbox.east; vessel.cog = (vessel.cog + 180) % 360; }
+      
+      // Occasionally change course
+      if (Math.random() < 0.05) {
+        vessel.cog = (vessel.cog + (Math.random() - 0.5) * 60) % 360;
+      }
+      
+      // Occasionally change speed
+      if (Math.random() < 0.02) {
+        vessel.sog = Math.max(0, vessel.sog + (Math.random() - 0.5) * 4);
+      }
+      
+      vessel.lat = lat;
+      vessel.lng = lng;
+      vessel.lastUpdate = Date.now();
+      
+      // Update the vessel in the map
+      vesselsRef.current.set(mmsi, { ...vessel });
+    });
+  };
+
+  const startMockAIS = useCallback((bbox: { north: number; south: number; east: number; west: number }, maxVessels: number, onVesselUpdate: ((vessel: Vessel) => void) | undefined) => {
+    // Clear any existing interval
+    if (mockIntervalRef.current) {
+      clearInterval(mockIntervalRef.current);
+    }
+    
+    // Initialize some mock vessels if none exist
+    if (vesselsRef.current.size === 0) {
+      initializeMockVessels(bbox, 30); // Start with 30 vessels
+    }
+    
+    // Update positions every 2 seconds
+    mockIntervalRef.current = setInterval(() => {
+      updateMockVesselPositions(bbox);
+      // Notify subscribers
+      vesselsRef.current.forEach((vessel) => {
+        onVesselUpdate?.(vessel);
+      });
+      setVesselCount(vesselsRef.current.size);
+    }, 2000);
+  }, [onVesselUpdate]);
 
   const cleanup = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -218,11 +321,30 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
       wsRef.current.close();
       wsRef.current = null;
     }
+    if (mockIntervalRef.current) {
+      clearInterval(mockIntervalRef.current);
+      mockIntervalRef.current = null;
+    }
     setIsConnected(false);
   }, []);
 
+  // Define connect function and keep it in a ref for use in timeouts
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    // If no API key provided, switch to mock mode
+    if (!apiKey) {
+      console.log('[AIS] No API key provided, using mock AIS data');
+      // Clear any existing WebSocket
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setIsConnected(true);
+      setError(null);
+      startMockAIS(bbox, maxVessels, onVesselUpdate);
+      return;
+    }
 
     try {
       const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
@@ -277,21 +399,33 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
       ws.onclose = () => {
         console.log('[AIS] Disconnected, reconnecting in 5s...');
         setIsConnected(false);
-        reconnectTimeoutRef.current = setTimeout(connect, 5000);
+        // Use the ref to call the latest connect callback
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectCallbackRef.current();
+        }, 5000);
       };
 
       ws.onerror = (err) => {
         console.error('[AIS] WebSocket error:', err);
         setError(new Error('WebSocket connection error'));
         onError?.(new Error('WebSocket connection error'));
+        ws.close();
       };
     } catch (e) {
       console.error('[AIS] Connection failed:', e);
       setError(e as Error);
       onError?.(e as Error);
-      reconnectTimeoutRef.current = setTimeout(connect, 5000);
+      // Schedule retry using the ref
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connectCallbackRef.current();
+      }, 5000);
     }
-  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels]);
+  }, [apiKey, bbox, onVesselUpdate, onError, maxVessels, startMockAIS]);
+
+  // Keep the ref up to date
+  useEffect(() => {
+    connectCallbackRef.current = connect;
+  }, [connect]);
 
   const disconnect = useCallback(() => {
     cleanup();
@@ -300,12 +434,25 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
   }, [cleanup]);
 
   useEffect(() => {
-    connect();
+    if (enabled) {
+      connect();
+    } else {
+      disconnect();
+    }
+
     return () => {
-      cleanup();
-      vesselsRef.current.clear();
+      disconnect();
     };
-  }, [connect, cleanup]);
+  }, [connect, disconnect, enabled]);
+
+  // Compute status for compatibility with MaltaDashboard
+  const status = !enabled
+    ? 'disabled'
+    : isConnected
+    ? 'connected'
+    : error
+    ? 'error'
+    : 'connecting';
 
   // Return vessels as array for easier consumption
   const vesselsArray = Array.from(vesselsRef.current.values());
@@ -315,6 +462,7 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
     vesselCount,
     isConnected,
     error,
+    status,
     connect,
     disconnect,
   };
@@ -351,30 +499,50 @@ export function useClusteredVessels(
     const gridX = Math.floor(vessel.lng / gridSize);
     const gridY = Math.floor(vessel.lat / gridSize);
     const key = `${gridX},${gridY}`;
-    if (!clusters.has(key)) clusters.set(key, []);
-    clusters.get(key)!.push(vessel);
+    if (!clusters.has(key)) {
+      const clusterVessel: Vessel = {
+        ...vessel,
+        mssi: 0, // Special marker for cluster
+        name: `Cluster (1)`,
+        type: 'cluster',
+      };
+      clusters.set(key, [clusterVessel]);
+    } else {
+      const cluster = clusters.get(key)!;
+      cluster.push(vessel);
+      // Update the cluster representative
+      const clusterVessel = cluster[0];
+      const avgLat = cluster.reduce((sum, v) => sum + v.lat, 0) / cluster.length;
+      const avgLng = cluster.reduce((sum, v) => sum + v.lng, 0) / cluster.length;
+      
+      clusterVessel.lat = avgLat;
+      clusterVessel.lng = avgLng;
+      clusterVessel.name = `Cluster (${cluster.length})`;
+      clusterVessel.type = 'cluster';
+      clusterVessel.lastUpdate = Date.now();
+    }
   }
 
+  // Flatten the clusters
   const result: Vessel[] = [];
   for (const cluster of clusters.values()) {
     if (cluster.length === 1) {
       result.push(cluster[0]);
     } else {
-      // Create cluster representative
+      // Recalculate the cluster representative (in case it was updated multiple times)
+      const clusterVessel = cluster[0];
       const avgLat = cluster.reduce((sum, v) => sum + v.lat, 0) / cluster.length;
       const avgLng = cluster.reduce((sum, v) => sum + v.lng, 0) / cluster.length;
-      const clusterVessel: Vessel = {
-        ...cluster[0],
-        mmsi: 0, // Special marker for cluster
-        lat: avgLat,
-        lng: avgLng,
-        name: `Cluster (${cluster.length})`,
-        type: 'cluster',
-        lastUpdate: Date.now(),
-      };
+      
+      clusterVessel.lat = avgLat;
+      clusterVessel.lng = avgLng;
+      clusterVessel.name = `Cluster (${cluster.length})`;
+      clusterVessel.type = 'cluster';
+      clusterVessel.lastUpdate = Date.now();
+      
       result.push(clusterVessel);
     }
   }
-
+  
   return result;
 }

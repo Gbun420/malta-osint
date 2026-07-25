@@ -27,7 +27,7 @@ export default function MaltaDashboard() {
   const [fires, setFires] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
   const [omrg, setOmrg] = useState<any>(null);
-  const [aisStatus, setAisStatus] = useState<'connecting' | 'connected' | 'error' | 'disabled'>('disabled');
+
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
 
@@ -35,10 +35,6 @@ export default function MaltaDashboard() {
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
     enabled: activeLayers.vessels,
   });
-
-  useEffect(() => {
-    setAisStatus(isConnected ? 'connected' : aisWsStatus);
-  }, [isConnected, aisWsStatus]);
 
   // Splash screen
   useEffect(() => {
@@ -77,27 +73,6 @@ export default function MaltaDashboard() {
   // Convert Map to array for rendering
   const vesselsArray = Array.from(vesselsMap.values());
 
-  // Combine vessel data for map
-  const allVessels = vesselsArray.map(v => ({
-    ...v,
-    type: 'vessel',
-    icon: 'ship',
-  }));
-
-  const allFlights = flights.map(f => ({
-    ...f,
-    type: 'flight',
-    icon: 'plane',
-  }));
-
-  const allEntities = [
-    ...allVessels,
-    ...allFlights,
-    ...earthquakes.map(e => ({ ...e, type: 'earthquake', icon: 'fire' })),
-    ...fires.map(f => ({ ...f, type: 'fire', icon: 'fire' })),
-    ...news.map(n => ({ ...n, type: 'news', icon: 'news' })),
-  ];
-
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
       {/* Splash Screen */}
@@ -129,13 +104,18 @@ export default function MaltaDashboard() {
 
       {/* Map */}
       <MaltaMap
-        vessels={allVessels}
-        flights={allFlights}
-        earthquakes={earthquakes}
-        fires={fires}
-        news={news}
-        marineWeather={marineWeather}
-        omrg={omrg}
+        data={{
+          environment: {
+            seismic: earthquakes,
+            fires: fires,
+          },
+          aviation: {
+            flights: flights,
+          },
+        }}
+        vessels={vesselsMap}
+        vesselCount={vesselCount}
+        isAISConnected={isConnected}
         activeLayers={activeLayers}
         onEntityClick={setSelectedEntity}
       />
@@ -169,11 +149,11 @@ export default function MaltaDashboard() {
       >
         <div className="flex items-center gap-1.5">
           <div className={`w-1.5 h-1.5 rounded-full ${
-            aisStatus === 'connected' ? 'bg-[var(--alert-green)]' :
-            aisStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
+            aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
+            aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
             'bg-[var(--alert-red)]'
           }`} />
-          <span>AIS: {aisStatus.toUpperCase()}</span>
+          <span>AIS: {aisWsStatus.toUpperCase()}</span>
         </div>
         <span>VESSELS: <span className="text-[var(--cyan-primary)] font-bold">{vesselsArray.length}</span></span>
         <span>FEEDS: <span className="text-[var(--gold-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span></span>
