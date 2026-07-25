@@ -1,27 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'next/link';
+import { CommandHeader } from '@/components/intelligence/CommandHeader';
+import { StatusBadge } from '@/components/intelligence/StatusBadge';
+import { ConfidenceBadge } from '@/components/intelligence/ConfidenceBadge';
+import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
-import { DataSourceHealthReport } from '@/intelligence/schemas/registry';
+import { MinisterBriefItem } from '@/intelligence/briefing/MinisterBriefItem';
+import { IntelligenceEvent } from '@/intelligence/types';
+import { SourceHealthRecord } from '@/intelligence/schemas/registry';
+import { fetchSourceHealth } from '@/services/intelligence/sourcesService';
 
 export default function SourceHealth() {
-  const [healthData, setHealthData] = useState<SourceHealthReport[]>([]);
+  const [healthData, setHealthData] = useState<SourceHealthRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHealthData = async () => {
+    const loadSourceHealth = async () => {
       try {
-        const healthData = await globalRepository.getSourceHealth();
-        setHealthData(healthData);
+        const data = await fetchSourceHealth();
+        setHealthData(data);
       } catch (error) {
-        console.error('Failed to load health data:', error);
+        console.error('Failed to load source health data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHealthData();
+    loadSourceHealth();
   }, []);
 
   return (
@@ -29,18 +36,9 @@ export default function SourceHealth() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Source Health</h1>
         <div className="flex items-center">
-          <SourceHealthBadge 
-            state="healthy" 
-            sourceName="Global Dashboard" 
-            lastAttemptAt="5 min ago" 
-            lastSuccessAt="2 min ago" 
-            cacheAgeSeconds={120} 
-            latencyMs={120} 
-            recordCount={5} 
-            providerHttpStatus={200} 
-            errorCode={null} 
-            safeErrorMessage={null}
-          />
+          <StatusBadge status="healthy" />
+          <ConfidenceBadge confidence={85} label="high" />
+          <VerificationBadge state="multi-source" />
         </div>
       </div>
 
@@ -48,22 +46,26 @@ export default function SourceHealth() {
         <h2 className="text-xl font-bold text-white">Data Source Health Status</h2>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {healthData.map(source => (
-            <div key={source.sourceId} className="p-4 border rounded-md shadow-sm">
-              <SourceHealthBadge 
-                state={source.state as any} 
-                sourceName={source.sourceId} 
-                lastAttemptAt="5 min ago" 
-                lastSuccessAt="3 min ago" 
-                cacheAgeSeconds={120} 
-                latencyMs={150} 
-                recordCount={5} 
-                providerHttpStatus={200} 
-                errorCode={null} 
-                safeErrorMessage={null}
-              />
-            </div>
-          ))}
+          {loading ? (
+            <div className="col-span-full text-center py-8">Loading source health...</div>
+          ) : (
+            healthData.map(source => (
+              <div key={source.sourceId} className="p-4 border rounded-md shadow-sm">
+                <SourceHealthBadge 
+                  state={source.state as any} 
+                  sourceName={source.sourceId} 
+                  lastAttemptAt="5 min ago" 
+                  lastSuccessAt="3 min ago" 
+                  cacheAgeSeconds={120} 
+                  latencyMs={150} 
+                  recordCount={5} 
+                  providerHttpStatus={200} 
+                  errorCode={null} 
+                  safeErrorMessage={null}
+                />
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

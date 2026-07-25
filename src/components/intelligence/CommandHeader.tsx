@@ -12,7 +12,7 @@ export function CommandHeader({ sidebarOpen, onToggleSidebar }: CommandHeaderPro
     <header className="flex items-center justify-between border-b border-gold/20 bg-void/80 p-4">
       <button 
         className="hidden md:hidden"
-        onClick={handleToggleSidebar}
+        onClick={onToggleSidebar}
         aria-label="Toggle sidebar"
       >
         <span className="hamburger hamburger-open"></span>
@@ -33,3 +33,4 @@ export function CommandHeader({ sidebarOpen, onToggleSidebar }: CommandHeaderPro
       </button>
     </header>
   );
+}

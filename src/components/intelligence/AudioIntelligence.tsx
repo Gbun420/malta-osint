@@ -1,8 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useMediaStream } from 'react-webcam';
-import { useRef } from 'react';
+import { CommandHeader } from '@/components/intelligence/CommandHeader';
+import { StatusBadge } from '@/components/intelligence/StatusBadge';
+import { ConfidenceBadge } from '@/components/intelligence/ConfidenceBadge';
+import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
+import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
+import { MinisterBriefItem } from '@/intelligence/briefing/MinisterBriefItem';
+import { IntelligenceEvent } from '@/intelligence/types';
+import { SourceHealthRecord } from '@/intelligence/schemas/registry';
+import { fetchIntelligenceEvents } from '@/services/intelligence/eventsService';
+import { fetchSourceHealth } from '@/services/intelligence/sourcesService';
 
 export default function AudioIntelligence() {
   const [recording, setRecording] = useState(false);
@@ -12,7 +20,6 @@ export default function AudioIntelligence() {
   const [status, setStatus] = useState('idle');
 
   const streamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
 
   const startRecording = async () => {
@@ -21,37 +28,39 @@ export default function AudioIntelligence() {
       streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       
-      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(1000);
       
-      mediaRecorder.on('data', (event) => {
-        const blob = event.data;
-        const audioChunks = [];
-        audioChunks.current.push(blob);
-        
-        const audioBlob = new Blob([blob], { type: 'audio/webm' });
-        const reader = new FileReader();
-        await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve();
-          reader.readAsArrayBuffer(blob);
-        });
-      }
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'transcript.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      
+      setRecording(true);
+      setIsRecording(true);
+      setStatus('recording');
     } catch (err) {
       setError(err.message);
+      setStatus('error');
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!recording) {
-      setRecording(true);
-      setStatus('recording');
-      await startRecording();
-    } else {
-      setRecording(false);
-      setRecording(false);
-      setStatus('idle');
+  const stopRecording = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
+    setRecording(false);
+    setIsRecording(false);
+    setStatus('idle');
   };
 
   const handleSubmit = (e) => {
@@ -66,94 +75,60 @@ export default function AudioIntelligence() {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.start(1000);
-      mediaRecorder.on('data', (event) => {
-        audioChunks.push(event.data);
-      });
-      
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transcript.webm';
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-    }
-  };
-
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Audio Intelligence</h1>
+      <CommandHeader 
+        sidebarOpen={false} 
+        onToggleSidebar={() => setActiveTab('audio')}
+      />
       
-      <div className="bg-gray-50 rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-bold mb-2">Audio Intelligence</h1>
-        <p className="text-gray-600">Record and analyze audio content for intelligence purposes</p>
-        
-        <div className="mt-4">
-          <input 
-            type="text" 
-            placeholder="Enter audio description or topic" 
-            className="w-full p-2 border rounded-md"
-            onChange={(e) => setTranscript(e.target.value)}
-          </div>
-          
-          <div className="mt-4">
-            <button 
-              className="bg-green-500 text-white rounded-full px-4 py-2" 
-              onClick={startRecording}
-              disabled={recording}
-            >
-              {recording ? 'Stop Recording' : 'Start Recording'}
-            </button>
-          </div>
-          
-          <div className="mt-4">
-            <p className="text-sm text-gray-500">Status: <span className={statusClass}>{status}</span></span>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold mb-4">Audio Intelligence</h1>
+        <Link href="/" className="text-white/60 hover:text-white">
+          <span className="text-sm">Command Centre</span>
+        </Link>
+        <Link href="/audio" className="ml-4 text-white/60">Audio</Link>
+      </div>
+      
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center">
+          <StatusBadge status="live" />
+          <ConfidenceBadge confidence={85} label="high" />
+          <VerificationBadge state="multi-source" />
         </div>
-        
-        <div className="mt-6">
-          <h3 className="text-lg font-medium">Transcript</h1>
-          <div className="bg-gray-50 rounded p-4">
-            {transcript}
-          </div>
-        </div>
-        
-        <div className="mt-6">
-          <h3 className="text-lg font-medium">Audio Controls</h3>
-          <div className="flex items-center gap-2">
-            <button 
-              className="bg-green-500/50 text-white rounded-full px-4 py-2" 
-              onClick={startRecording}
-              disabled={recording}
-            >
-              {recording ? 'Stop Recording' : 'Start Recording'}
-            </button>
-            
-            <span className="ml-4">{status}</span>
-          </div>
+      </div>
+      
+      <div className="flex items-center mb-6">
+        <input 
+          type="text" 
+          placeholder="Enter audio description or topic" 
+          className="w-full p-2 border rounded-md"
+          onChange={(e) => setTranscript(e.target.value)}
+          className="mb-2"
+        />
+        <button 
+          className="bg-green-500/50 text-white rounded-full px-4 py-2" 
+          onClick={handleSubmit}
+          disabled={recording}
+        >
+          {recording ? 'Stop Recording' : 'Start Recording'}
+        </button>
+      </div>
+      
+      <div className="mt-6">
+        <h3 className="text-lg font-medium">Status</h3>
+        <p className={`text-sm font-medium ${status === 'recording' ? 'text-green-500' : 
+          status === 'error' ? 'text-red-500' : 'text-gray-500'}`}>
+          {status}
+        </p>
+      </div>
+      
+      <div className="mt-6">
+        <h3 className="text-lg font-medium">Transcript</h3>
+        <div className="bg-gray-50 rounded p-4">
+          {transcript}
         </div>
       </div>
     </div>
   );
 }
-
-const statusClasses = {
-  idle: 'text-gray-500',
-  recording: 'text-green-500',
-  error: 'text-red-500',
-  finished: 'text-green-500'
-};
-
-const statusClasses = {
-  idle: 'text-gray-500',
-  recording: 'text-green-500',
-  error: 'text-red-500',
-  finished: 'text-green-500'
-};
