@@ -99,7 +99,6 @@ export async function recordHealth(input: RecordHealthInput) {
     consecutiveFailures,
     authenticationState: credentialsState,
     rateLimitState,
-    stalenessThresholdSeconds: input.stalenessThresholdSeconds,
     errorMessage: safeError,
   });
 

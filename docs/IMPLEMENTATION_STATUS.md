@@ -122,3 +122,14 @@ Monolithic `/api/malta/live` preserved for backward compatibility.
 - 2 of 3 UN News sub-feeds return HTML/non-RSS — main `news.un.org` RSS works
 - No deduplication across adapters — different IDs for same story from two EU sources
 
+## Cleanup and Foundation Fixes (July 25)
+Removed duplicate, broken, and mock code that conflicted with the canonical architecture:
+
+- Deleted `src/lib/data-sources/registry.ts` — duplicate registry with incompatible source IDs; canonical registry is `SOURCE_REGISTRY` at `src/intelligence/schemas/source-registry.ts`
+- Deleted `src/routes/health-data-sources.ts` — broken Express router (unused, references deleted registry)
+- Deleted `src/routes/health.ts` — broken Express router (missing `@types/express`, references deleted registry)
+- Deleted `src/intelligence/scripts/test-redis.ts`, `check-redis.ts`, `check-redis-health.ts` — mock/test scripts violating the "no mock data" principle of the directive
+- Fixed type error in `src/lib/data-health/index.ts` — removed erroneous `stalenessThresholdSeconds` field that was incorrectly passed to `createSourceHealthRecord()` (that function reads it from the source definition internally)
+
+No remaining references to deleted files exist in the codebase.
+
