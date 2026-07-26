@@ -54,14 +54,6 @@ export default function SourceHealth() {
                 <SourceHealthBadge 
                   state={source.state as any} 
                   sourceName={source.sourceId} 
-                  lastAttemptAt="5 min ago" 
-                  lastSuccessAt="3 min ago" 
-                  cacheAgeSeconds={120} 
-                  latencyMs={150} 
-                  recordCount={5} 
-                  providerHttpStatus={200} 
-                  errorCode={null} 
-                  safeErrorMessage={null}
                 />
               </div>
             ))

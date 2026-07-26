@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { CommandHeader } from '@/components/intelligence/CommandHeader';
 import { StatusBadge } from '@/components/intelligence/StatusBadge';
 import { ConfidenceBadge } from '@/components/intelligence/ConfidenceBadge';
 import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
-import { MinisterBriefItem } from '@/intelligence/briefing/MinisterBriefItem';
+import { MinisterBriefItem } from '@/intelligence/types';
 import { IntelligenceEvent } from '@/intelligence/types';
 import { SourceHealthRecord } from '@/intelligence/schemas/registry';
 import { fetchIntelligenceEvents } from '@/services/intelligence/eventsService';
@@ -19,8 +20,8 @@ export default function AudioIntelligence() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('idle');
 
-  const streamRef = useRef(null);
-  const audioChunks = useRef([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
 
   const startRecording = async () => {
     try {
@@ -31,11 +32,11 @@ export default function AudioIntelligence() {
       mediaRecorder.start(1000);
       
       mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
+        audioChunks.current.push(event.data);
       };
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const blob = new Blob(audioChunks.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -48,7 +49,7 @@ export default function AudioIntelligence() {
       setIsRecording(true);
       setStatus('recording');
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('error');
     }
   };
@@ -63,7 +64,7 @@ export default function AudioIntelligence() {
     setStatus('idle');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (recording) {
       stopRecording();
@@ -79,7 +80,7 @@ export default function AudioIntelligence() {
     <div className="p-6">
       <CommandHeader 
         sidebarOpen={false} 
-        onToggleSidebar={() => setActiveTab('audio')}
+        onToggleSidebar={() => {}}
       />
       
       <div className="flex justify-between items-center mb-6">
@@ -92,8 +93,8 @@ export default function AudioIntelligence() {
       
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
-          <StatusBadge status="live" />
-          <ConfidenceBadge confidence={85} label="high" />
+          <StatusBadge status="green" label="Live" />
+          <ConfidenceBadge value={85} label="high" />
           <VerificationBadge state="multi-source" />
         </div>
       </div>
@@ -102,9 +103,8 @@ export default function AudioIntelligence() {
         <input 
           type="text" 
           placeholder="Enter audio description or topic" 
-          className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md mb-2"
           onChange={(e) => setTranscript(e.target.value)}
-          className="mb-2"
         />
         <button 
           className="bg-green-500/50 text-white rounded-full px-4 py-2" 

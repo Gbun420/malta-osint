@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Link } from 'next/link';
+import Link from 'next/link';
+import { Sidebar } from './Sidebar';
+import { CommandHeader } from './CommandHeader';
+import { StatusBadge } from './StatusBadge';
 
 export default function ApplicationShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -31,18 +34,10 @@ export default function ApplicationShell({ children }: { children: React.ReactNo
         <footer className="border-t border-gold/20 p-4 text-white/50">
           <div className="flex items-center justify-between">
             <span className="text-sm">Third Eye Intelligence Platform</span>
-            <StatusBadge />
+            <StatusBadge status="green" label="Operational" />
           </div>
         </footer>
       </div>
     </div>
   );
-}
-
-function handleToggleSidebar() {
-  setSidebarOpen(!sidebarOpen);
-}
-
-function handleTabChange(tab: string) {
-  setActiveTab(tab);
 }
