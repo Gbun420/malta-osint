@@ -225,6 +225,7 @@ export default function MaltaDashboard() {
               { href: '/audio', label: 'Audio Intel', icon: Headphones },
               { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
               { href: '/review', label: 'Review Queue', icon: Briefcase },
+              { href: '/docs', label: 'API Docs', icon: FileText },
             ].map(item => (
               <Link
                 key={item.href}
