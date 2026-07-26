@@ -20,7 +20,7 @@ export function CommandHeader({ sidebarOpen, onToggleSidebar }: CommandHeaderPro
       
       <div className="flex-1">
         <span className="text-white/60">
-          Third Eye Intelligence Platform
+          Malta OSINT Intelligence Platform
         </span>
       </div>
       

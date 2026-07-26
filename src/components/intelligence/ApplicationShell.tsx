@@ -33,7 +33,7 @@ export default function ApplicationShell({ children }: { children: React.ReactNo
         
         <footer className="border-t border-gold/20 p-4 text-white/50">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Third Eye Intelligence Platform</span>
+            <span className="text-sm">Malta OSINT Intelligence Platform</span>
             <StatusBadge status="green" label="Operational" />
           </div>
         </footer>

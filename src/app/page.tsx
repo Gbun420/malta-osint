@@ -77,7 +77,7 @@ export default function MaltaDashboard() {
         news: newNews.length ? newNews : lastGoodDataRef.current.news,
       };
     } catch (err) {
-      console.error('[Third Eye] Live-data fetch failed:', err);
+      console.error('[Malta OSINT] Live-data fetch failed:', err);
       const cached = lastGoodDataRef.current;
       setFlights(cached.flights);
       setEarthquakes(cached.earthquakes);

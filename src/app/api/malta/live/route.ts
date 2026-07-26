@@ -20,7 +20,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout 
     return await fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'TimeoutError') {
-      console.warn(`[Third Eye] Fetch timeout: ${url.slice(0, 80)}`);
+      console.warn(`[Malta OSINT] Fetch timeout: ${url.slice(0, 80)}`);
     }
     throw e;
   }
@@ -134,7 +134,7 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
     try {
       const parsed = await parser.parseURL(feed.url);
       if (!parsed.items?.length) {
-        console.warn(`[Third Eye] ${feed.name} returned 0 items — retrying once`);
+        console.warn(`[Malta OSINT] ${feed.name} returned 0 items — retrying once`);
         const retry = await parser.parseURL(feed.url);
         parsed.items = retry.items || [];
       }
@@ -154,7 +154,7 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
         });
       }
     } catch (e) {
-      console.warn(`[Third Eye] Failed to fetch ${feed.name}:`, e instanceof Error ? e.message : e);
+      console.warn(`[Malta OSINT] Failed to fetch ${feed.name}:`, e instanceof Error ? e.message : e);
     }
   }
 
@@ -215,9 +215,10 @@ async function fetchFiresData(): Promise<{ fires: FireEvent[]; meta: SourceMeta 
     let fires: FireEvent[] = [];
     let sourceUsed = '';
 
+    const firBbox = `${MALTA_FIR_BBOX.west},${MALTA_FIR_BBOX.south},${MALTA_FIR_BBOX.east},${MALTA_FIR_BBOX.north}`;
     const areaSources = [
-      { name: 'VIIRS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/VIIRS_SNPP_NRT/global/2` },
-      { name: 'MODIS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/MODIS_NRT/global/2` },
+      { name: 'VIIRS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/VIIRS_SNPP_NRT/${firBbox}/2` },
+      { name: 'MODIS', url: `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${firmsApiKey}/MODIS_NRT/${firBbox}/2` },
     ];
 
     for (const s of areaSources) {
@@ -313,7 +314,7 @@ export async function GET() {
         }
       }
     } catch (e) {
-      console.warn('[Third Eye] KV cache read failed:', e);
+      console.warn('[Malta OSINT] KV cache read failed:', e);
     }
   }
 
@@ -377,7 +378,7 @@ export async function GET() {
 
     if (kv) {
       kv.set('live:response', JSON.stringify(response)).catch((e: Error) =>
-        console.warn('[Third Eye] KV cache write failed:', e.message)
+        console.warn('[Malta OSINT] KV cache write failed:', e.message)
       );
     }
 
@@ -389,7 +390,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[Third Eye] Live data error:', error);
+    console.error('[Malta OSINT] Live data error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch live data', timestamp: new Date().toISOString() },
       { status: 500 }

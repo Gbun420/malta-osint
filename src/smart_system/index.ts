@@ -1,7 +1,7 @@
 /**
  * Smart System — public barrel.
  *
- * MSS-inspired, human-in-the-loop data-fusion capability for Third Eye.
+ * MSS-inspired, human-in-the-loop data-fusion capability for Malta OSINT.
  * Entirely gated behind `ENABLE_MSS_SMART_SYSTEM_MODULE`; decision-support only.
  *
  * Layers: ingestion (real feeds) → ontology → models (advisory) →
