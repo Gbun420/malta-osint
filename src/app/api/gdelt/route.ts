@@ -12,12 +12,10 @@ const MEDITERRANEAN_COUNTRIES = [
 export async function GET() {
   try {
     const queries = [
-      { q: 'conflict OR protest OR attack OR crisis', label: 'conflict' },
-      { q: 'sanctions OR diplomatic OR treaty OR agreement', label: 'diplomacy' },
-      { q: 'maritime OR shipping OR port OR vessel', label: 'maritime' },
-      { q: 'election OR government OR parliament', label: 'politics' },
-      { q: 'humanitarian OR refugee OR aid OR disaster', label: 'humanitarian' },
+      { q: 'maritime OR shipping OR port OR vessel Mediterranean', label: 'maritime' },
       { q: 'malta OR maltese', label: 'malta' },
+      { q: 'conflict OR protest OR crisis Mediterranean', label: 'conflict' },
+      { q: 'humanitarian OR refugee OR aid OR disaster Mediterranean', label: 'humanitarian' },
     ];
 
     const allArticles: any[] = [];
@@ -49,7 +47,7 @@ export async function GET() {
           } catch { /* skip non-JSON responses */ }
         }
 
-        await new Promise(r => setTimeout(r, 6000));
+        await new Promise(r => setTimeout(r, 5100));
       } catch { /* skip failed queries */ }
     }
 
