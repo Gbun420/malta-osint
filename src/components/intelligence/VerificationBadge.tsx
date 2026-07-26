@@ -17,7 +17,7 @@ export function VerificationBadge({ state }: { state: string }) {
     'retracted': 'retracted'
   };
   
-  const colorClass = {
+  const colorClass: Record<string, string> = {
     'single-source': 'bg-green-500/20 text-green-400',
     'multi-source': 'bg-blue-500/20 text-blue-400',
     'official-confirmation': 'bg-green-500/20 text-green-400',

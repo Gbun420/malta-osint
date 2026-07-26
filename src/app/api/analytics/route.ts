@@ -19,11 +19,11 @@ export async function GET() {
     const eventsLast30d = events.filter(e => e.eventTime && new Date(e.eventTime) >= cutoff30d).length;
     const criticalEvents = events.filter(e => e.severity >= 4).length;
     const highConfidenceEvents = events.filter(e => (e.confidenceScore || 0) >= 80).length;
-    const verifiedEvents = events.filter(e => e.verificationState === 'verified' || e.verificationState === 'multi-source').length;
+    const verifiedEvents = events.filter(e => e.verificationState === 'official-confirmation' || e.verificationState === 'multi-source').length;
 
     const activeSources = sources.length;
     const healthySources = sources.filter(s => s.state === 'healthy').length;
-    const degradedSources = sources.filter(s => s.state === 'degraded' || s.state === 'unhealthy').length;
+    const degradedSources = sources.filter(s => s.state === 'degraded' || s.state === 'error').length;
 
     // Trends
     const eventsByDayMap = new Map<string, number>();
@@ -86,8 +86,8 @@ export async function GET() {
 
     const sourceEventCounts = new Map<string, number>();
     events.forEach(e => {
-      if (e.sourceId) {
-        sourceEventCounts.set(e.sourceId, (sourceEventCounts.get(e.sourceId) || 0) + 1);
+      if (e.provenance?.adapterId) {
+        sourceEventCounts.set(e.provenance.adapterId, (sourceEventCounts.get(e.provenance.adapterId) || 0) + 1);
       }
     });
     const mostActiveSource = Array.from(sourceEventCounts.entries())

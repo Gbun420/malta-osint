@@ -37,7 +37,7 @@ export async function GET() {
   const sourceId = 'nasa-firms';
   const attemptedAt = new Date().toISOString();
   const start = Date.now();
-  let httpStatus = 200;
+  const httpStatus = 200;
   let errorMessage: string | null = null;
 
   try {

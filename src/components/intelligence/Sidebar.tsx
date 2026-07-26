@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface SidebarProps {
   activeRoute: string;
@@ -36,7 +37,7 @@ export function Sidebar({ activeRoute, isOpen, onToggle }: SidebarProps) {
           className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
         >
           <span className="hamburger hamburger-open"></span>
-          Minister's Brief
+          Minister&apos;s Brief
         </Link>
         
         <Link 
@@ -144,5 +145,5 @@ export function Sidebar({ activeRoute, isOpen, onToggle }: SidebarProps) {
           </Link>
         </div>
       </aside>
-    </>
   );
+}

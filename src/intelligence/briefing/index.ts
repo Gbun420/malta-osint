@@ -22,7 +22,7 @@ export function generateBriefing(
   const categories = params.categories;
   const since = params.since ? new Date(params.since).getTime() : 0;
 
-  let filtered = events.filter(e => {
+  const filtered = events.filter(e => {
     if (e.maltaRelevanceScore < minRelevance) return false;
     if (e.confidenceScore < minConfidence) return false;
     if (categories && !e.categories.some(c => categories.includes(c))) return false;

@@ -71,7 +71,7 @@ export default function MinisterBrief() {
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mx-auto"></div>
-          <p className="mt-4 text-white/60">Loading Minister's Brief...</p>
+          <p className="mt-4 text-white/60">Loading Minister&apos;s Brief...</p>
         </div>
       </div>
     );
@@ -80,7 +80,7 @@ export default function MinisterBrief() {
   return (
     <div className="container mx-auto p-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Minister's Brief</h1>
+        <h1 className="text-2xl font-bold text-white">Minister&apos;s Brief</h1>
         <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
           <button 
             className={`bg-gold/10 hover:bg-gold/30 rounded-md px-4 py-2 ${view === 'morning' ? 'bg-gold/30' : ''}`}
