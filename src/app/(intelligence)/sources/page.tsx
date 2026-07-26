@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Link } from 'next/link';
+import Link from 'next/link';
 import { CommandHeader } from '@/components/intelligence/CommandHeader';
 import { StatusBadge } from '@/components/intelligence/StatusBadge';
 import { ConfidenceBadge } from '@/components/intelligence/ConfidenceBadge';
 import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
-import { MinisterBriefItem } from '@/intelligence/briefing/MinisterBriefItem';
+import { MinisterBriefItem } from '@/intelligence/types';
 import { IntelligenceEvent } from '@/intelligence/types';
 import { SourceHealthRecord } from '@/intelligence/schemas/registry';
 import { fetchSourceHealth } from '@/services/intelligence/sourcesService';
@@ -36,8 +36,8 @@ export default function SourceHealth() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Source Health</h1>
         <div className="flex items-center">
-          <StatusBadge status="healthy" />
-          <ConfidenceBadge confidence={85} label="high" />
+          <StatusBadge status="green" label="Healthy" />
+          <ConfidenceBadge value={85} label="high" />
           <VerificationBadge state="multi-source" />
         </div>
       </div>

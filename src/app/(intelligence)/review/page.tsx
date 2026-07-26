@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from 'next/link';
+import Link from 'next/link';
 import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 
 export default function ReviewQueue() {
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState<{ id: string; title: string; status: string; description: string; createdAt: string }[]>([]);
   const [filter, setFilter] = useState('all');
 
   const reviewStates = ['pending', 'approved', 'rejected', 'changes-requested'];
