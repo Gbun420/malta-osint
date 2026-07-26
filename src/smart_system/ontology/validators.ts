@@ -67,7 +67,6 @@ export function validateBase(e: Partial<EntityBase>): string[] {
   } else {
     if (!isNonEmptyString(e.provenance.adapterId)) errs.push('provenance.adapterId is required');
     if (!isIsoTimestamp(e.provenance.ingestedAt)) errs.push('provenance.ingestedAt must be ISO-8601');
-    if (typeof e.provenance.simulated !== 'boolean') errs.push('provenance.simulated must be boolean');
   }
   if (!e.audit) {
     errs.push('audit is required');

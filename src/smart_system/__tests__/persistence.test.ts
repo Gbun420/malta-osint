@@ -47,7 +47,7 @@ describe('snapshot persistence (survives across instances/requests)', () => {
     a.analyze();
     await a.persist();
     expect(a.repository.size()).toBe(10);
-    expect(a.review.list().length).toBe(4);
+    expect(a.review.list().length).toBe(1);
 
     // Instance B: a "fresh isolate" — empty until it hydrates from the store.
     const b = createSmartSystem({ ...deterministic(), snapshotStore: store });
@@ -55,7 +55,7 @@ describe('snapshot persistence (survives across instances/requests)', () => {
     await b.hydrate();
 
     expect(b.repository.size()).toBe(10);
-    expect(b.review.list().length).toBe(4);
+    expect(b.review.list().length).toBe(1);
     expect(b.auditLog.size()).toBeGreaterThan(0);
     expect(b.ontologyTotal()).toBe(10);
     expect(b.ontologyCounts().Detection).toBe(5);

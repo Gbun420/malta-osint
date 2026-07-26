@@ -8,7 +8,7 @@ import { ConfidenceBadge } from '@/components/intelligence/ConfidenceBadge';
 import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
 import { IntelligenceEvent } from '@/intelligence/types';
-import { fetchIntelligenceEvents } from '@/services/intelligence/eventsService';
+import { fetchIntelligenceEvents, EventsServiceError, EventsResult } from '@/services/intelligence/eventsService';
 import { confidenceLabel } from '@/intelligence/confidence';
 
 interface FilterState {
@@ -42,6 +42,8 @@ const CONFIDENCE_LABELS = {
 export default function GlobalEvents() {
   const [events, setEvents] = useState<IntelligenceEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<EventsResult['meta'] | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -131,10 +133,18 @@ export default function GlobalEvents() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const data = await fetchIntelligenceEvents();
-        setEvents(data);
-      } catch (error) {
-        console.error('Failed to load events:', error);
+        setError(null);
+        const result = await fetchIntelligenceEvents();
+        setEvents(result.events);
+        setMeta(result.meta);
+      } catch (err) {
+        if (err instanceof EventsServiceError) {
+          setError(err.message);
+        } else {
+          setError('An unexpected error occurred while loading events');
+        }
+        setEvents([]);
+        setMeta(null);
       } finally {
         setLoading(false);
       }
@@ -460,6 +470,29 @@ export default function GlobalEvents() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="text-red-400 text-4xl mb-4">⚠</div>
+            <h3 className="text-white text-lg font-medium mb-2">Failed to load events</h3>
+            <p className="text-red-300/70 mb-4 max-w-md mx-auto">{error}</p>
+            <button
+              onClick={() => { setLoading(true); setError(null); fetchIntelligenceEvents().then(r => { setEvents(r.events); setMeta(r.meta); }).catch(e => setError(e instanceof EventsServiceError ? e.message : 'Unexpected error')).finally(() => setLoading(false)); }}
+              className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredEvents.length === 0 && events.length === 0 && meta ? (
+          <div className="text-center py-12">
+            <div className="text-white/40 text-4xl mb-4">📭</div>
+            <h3 className="text-white text-lg font-medium mb-2">No events in repository</h3>
+            <p className="text-white/50 mb-4">The intelligence repository is empty. Events will appear here once ingested.</p>
+            {meta.warnings.length > 0 && (
+              <div className="max-w-md mx-auto mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <p className="text-yellow-300/80 text-sm">{meta.warnings[0]}</p>
+              </div>
+            )}
+          </div>
         ) : filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-white/40 text-4xl mb-4">🔍</div>
@@ -543,6 +576,20 @@ export default function GlobalEvents() {
           </div>
         )}
       </div>
+
+      {/* Source Metadata */}
+      {meta && events.length > 0 && (
+        <div className="text-xs text-white/40 flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-white/5">
+          <span>Sources: {meta.sources.join(', ') || 'none'}</span>
+          <span>Cache: {meta.cache.state} ({meta.cache.ageSeconds}s)</span>
+          <span>Record count: {meta.recordCount}</span>
+          {meta.warnings.length > 0 && (
+            <span className="text-yellow-400/60" title={meta.warnings.join('; ')}>
+              ⚠ {meta.warnings.length} warning{meta.warnings.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

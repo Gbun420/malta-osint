@@ -4,10 +4,11 @@ import { fetchSourceHealth } from '@/services/intelligence/sourcesService';
 
 export async function GET() {
   try {
-    const [events, sources] = await Promise.all([
+    const [eventsResult, sources] = await Promise.all([
       fetchIntelligenceEvents(),
       fetchSourceHealth()
     ]);
+    const { events } = eventsResult;
 
     const now = new Date();
     const cutoff7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

@@ -23,6 +23,18 @@ export interface Vessel {
   positionAge: number;
 }
 
+type AISStatus =
+  | 'connecting'
+  | 'live-stream'
+  | 'live-no-positions'
+  | 'rate-limited'
+  | 'auth-failed'
+  | 'relay-unavailable'
+  | 'cached-snapshot'
+  | 'stale-snapshot'
+  | 'not-configured'
+  | 'disabled';
+
 interface UseAISStreamOptions {
   enabled?: boolean;
 }
@@ -32,44 +44,37 @@ interface UseAISStreamReturn {
   vesselCount: number;
   isConnected: boolean;
   error: Error | null;
-  status: 'connecting' | 'connected' | 'error' | 'disabled';
+  status: AISStatus;
 }
 
-const AIS_WS_URL = 'wss://stream.aisstream.io/v0/stream';
-const MALTA_BOUNDING_BOX = [[[35.55, 14.1], [36.1, 14.6]]];
-const WORLD_BOUNDING_BOX = [[[-90, -180], [90, 180]]];
-const STALE_MS = 600000;
+interface AISApiResponse {
+  vessels: Vessel[];
+  count: number;
+  connected: boolean;
+  error: string | null;
+  timestamp: number;
+}
 
-function vesselFromPositionReport(msg: any): Vessel | null {
-  const meta = msg.metaData;
-  const pos = msg.message?.position;
-  if (!meta?.mmsi || !pos) return null;
-  const mmsi = Number(meta.mmsi);
-  return {
-    mmsi,
-    name: meta.shipName || `MMSI-${mmsi}`,
-    lat: pos.lat,
-    lng: pos.lon,
-    sog: msg.message.sog ?? 0,
-    cog: msg.message.cog ?? 0,
-    heading: msg.message.heading ?? 0,
-    navStatus: msg.message.navStatus ?? 0,
-    rot: msg.message.rot ?? 0,
-    type: meta.shipType != null ? String(meta.shipType) : 'unknown',
-    dimension: {
-      a: msg.message.dimension?.a ?? 0,
-      b: msg.message.dimension?.b ?? 0,
-      c: msg.message.dimension?.c ?? 0,
-      d: msg.message.dimension?.d ?? 0,
-    },
-    draught: msg.message.draught ?? 0,
-    destination: msg.message.destination || '',
-    eta: msg.message.eta || '',
-    callSign: meta.callSign || '',
-    imo: meta.imo ? String(meta.imo) : '',
-    lastUpdate: Date.now(),
-    positionAge: 0,
-  };
+const STALE_MS = 600000;
+const POLL_INTERVAL = 30000;
+const STALE_CHECK_INTERVAL = 60000;
+
+function deriveStatus(
+  apiError: string | null,
+  apiConnected: boolean,
+  localVesselCount: number,
+): AISStatus {
+  if (apiError) {
+    const e = apiError.toLowerCase();
+    if (e.includes('rate limit') || e.includes('429')) return 'rate-limited';
+    if (e.includes('auth') || e.includes('key')) return 'auth-failed';
+    if (e.includes('unavailable') || e.includes('relay')) return 'relay-unavailable';
+    if (e.includes('not configured')) return 'not-configured';
+  }
+  if (apiConnected) {
+    return localVesselCount > 0 ? 'live-stream' : 'live-no-positions';
+  }
+  return 'connecting';
 }
 
 export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamReturn {
@@ -79,130 +84,78 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
   const [vesselCount, setVesselCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const apiKeyRef = useRef<string | null>(null);
+  const [status, setStatus] = useState<AISStatus>('disabled');
   const pollRef = useRef<NodeJS.Timeout | null>(null);
-  const cleanupRef = useRef(false);
-
-  const connectWs = useCallback(async () => {
-    if (!apiKeyRef.current) {
-      try {
-        const configRes = await fetch('/api/config');
-        if (configRes.ok) {
-          const config = await configRes.json();
-          apiKeyRef.current = config.values?.AIS_API_KEY || null;
-        }
-      } catch {
-        // fallback to poll
-      }
-    }
-
-    if (!apiKeyRef.current) return;
-
-    cleanupRef.current = false;
-    try {
-      const ws = new WebSocket(`${AIS_WS_URL}?apiKey=${apiKeyRef.current}`);
-
-      ws.onopen = () => {
-        if (cleanupRef.current) { ws.close(); return; }
-        ws.send(JSON.stringify({
-          boundingBoxes: WORLD_BOUNDING_BOX,
-          filterMessageTypes: ['PositionReport', 'ShipStaticData'],
-        }));
-        setIsConnected(true);
-        setError(null);
-        wsRef.current = ws;
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.messageType === 'PositionReport') {
-            const vessel = vesselFromPositionReport(msg);
-            if (vessel) {
-              vesselsRef.current.set(vessel.mmsi, vessel);
-              setVesselCount(vesselsRef.current.size);
-            }
-          } else if (msg.messageType === 'ShipStaticData') {
-            const mmsi = Number(msg.metaData?.mmsi);
-            const existing = vesselsRef.current.get(mmsi);
-            if (existing && msg.message?.shipName) {
-              existing.name = msg.message.shipName;
-              existing.callSign = msg.message.callSign || existing.callSign;
-              existing.imo = msg.message.imo ? String(msg.message.imo) : existing.imo;
-              existing.dimension = {
-                a: msg.message.dimension?.a ?? existing.dimension.a,
-                b: msg.message.dimension?.b ?? existing.dimension.b,
-                c: msg.message.dimension?.c ?? existing.dimension.c,
-                d: msg.message.dimension?.d ?? existing.dimension.d,
-              };
-              existing.draught = msg.message.draught ?? existing.draught;
-              existing.destination = msg.message.destination || existing.destination;
-              existing.eta = msg.message.eta || existing.eta;
-            }
-          }
-        } catch {
-          // skip malformed messages
-        }
-      };
-
-      ws.onerror = () => {
-        if (cleanupRef.current) return;
-        setError(new Error('AIS WebSocket connection failed'));
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        wsRef.current = null;
-        if (cleanupRef.current) return;
-        setIsConnected(false);
-        setTimeout(connectWs, 5000);
-      };
-    } catch {
-      setIsConnected(false);
-    }
-  }, []);
+  const staleCheckRef = useRef<NodeJS.Timeout | null>(null);
+  const hasDataRef = useRef(false);
 
   const pollVessels = useCallback(async () => {
     try {
       const res = await fetch('/api/ais/vessels', { cache: 'no-store' });
       if (!res.ok) throw new Error(`AIS proxy returned ${res.status}`);
-      const data = await res.json();
+      const data: AISApiResponse = await res.json();
 
-      if (data.connected && Array.isArray(data.vessels)) {
-        setIsConnected(true);
-        setError(null);
+      if (Array.isArray(data.vessels)) {
         for (const v of data.vessels) {
-          if (v.mmsi) vesselsRef.current.set(v.mmsi, v as Vessel);
+          if (!v.mmsi) continue;
+          const vessel: Vessel = {
+            ...v,
+            positionAge: data.timestamp - v.lastUpdate,
+          };
+          vesselsRef.current.set(v.mmsi, vessel);
         }
-        setVesselCount(vesselsRef.current.size);
+        const count = vesselsRef.current.size;
+        setVesselCount(count);
+        hasDataRef.current = count > 0;
       }
+
+      setIsConnected(data.connected || false);
+
+      if (data.error) {
+        setError(new Error(data.error));
+        if (hasDataRef.current) {
+          setStatus('cached-snapshot');
+        } else {
+          setStatus(deriveStatus(data.error, data.connected || false, 0));
+        }
+        return;
+      }
+
+      setError(null);
+      setStatus(deriveStatus(null, data.connected || false, vesselsRef.current.size));
     } catch (e) {
       const staleCount = Array.from(vesselsRef.current.values())
         .filter(v => Date.now() - v.lastUpdate < STALE_MS).length;
-      if (staleCount === 0) {
+
+      if (staleCount > 0) {
+        setStatus('cached-snapshot');
+        setIsConnected(false);
+      } else {
         setError(e instanceof Error ? e : new Error('Failed to fetch AIS data'));
         setIsConnected(false);
+        setStatus('relay-unavailable');
       }
     }
   }, []);
 
   useEffect(() => {
     if (!enabled) {
-      cleanupRef.current = true;
-      if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      if (staleCheckRef.current) { clearInterval(staleCheckRef.current); staleCheckRef.current = null; }
       vesselsRef.current.clear();
+      hasDataRef.current = false;
       setVesselCount(0);
       setIsConnected(false);
       setError(null);
+      setStatus('disabled');
       return;
     }
 
-    connectWs();
-    pollRef.current = setInterval(pollVessels, 30000);
+    setStatus('connecting');
+    pollVessels();
+    pollRef.current = setInterval(pollVessels, POLL_INTERVAL);
 
-    const staleInterval = setInterval(() => {
+    staleCheckRef.current = setInterval(() => {
       const now = Date.now();
       let changed = false;
       for (const [mmsi, v] of vesselsRef.current) {
@@ -211,39 +164,27 @@ export function useAISStream(options: UseAISStreamOptions = {}): UseAISStreamRet
           changed = true;
         }
       }
-      if (changed) setVesselCount(vesselsRef.current.size);
-    }, 60000);
+      if (changed) {
+        const count = vesselsRef.current.size;
+        setVesselCount(count);
+        hasDataRef.current = count > 0;
+        if (count === 0) setStatus('stale-snapshot');
+      }
+    }, STALE_CHECK_INTERVAL);
 
     return () => {
-      cleanupRef.current = true;
-      if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
-      clearInterval(staleInterval);
-      apiKeyRef.current = null;
+      if (staleCheckRef.current) { clearInterval(staleCheckRef.current); staleCheckRef.current = null; }
     };
-  }, [enabled, connectWs, pollVessels]);
+  }, [enabled, pollVessels]);
 
-  const status = !enabled
-    ? 'disabled'
-    : isConnected
-    ? 'connected'
-    : error
-    ? 'error'
-    : 'connecting';
-
-  return {
-    vessels: vesselsRef.current,
-    vesselCount,
-    isConnected,
-    error,
-    status,
-  };
+  return { vessels: vesselsRef.current, vesselCount, isConnected, error, status };
 }
 
 export function useViewportVessels(
   vessels: Map<number, Vessel>,
   bounds: { north: number; south: number; east: number; west: number } | null,
-  maxCount = 1000
+  maxCount = 1000,
 ): Vessel[] {
   if (!bounds) return [];
   return Array.from(vessels.values())
@@ -257,7 +198,7 @@ export function useViewportVessels(
 export function useClusteredVessels(
   vessels: Vessel[],
   zoom: number,
-  clusterDistanceKm = 5
+  clusterDistanceKm = 5,
 ): Vessel[] {
   if (zoom >= 10 || vessels.length === 0) return vessels;
 
@@ -286,7 +227,7 @@ export function useClusteredVessels(
       clusterVessel.lng = avgLng;
       clusterVessel.name = `Cluster (${cluster.length})`;
       clusterVessel.type = 'cluster';
-      clusterVessel.lastUpdate = Date.now();
+      clusterVessel.lastUpdate = Math.max(...cluster.map(v => v.lastUpdate));
     }
   }
 
@@ -302,7 +243,7 @@ export function useClusteredVessels(
       clusterVessel.lng = avgLng;
       clusterVessel.name = `Cluster (${cluster.length})`;
       clusterVessel.type = 'cluster';
-      clusterVessel.lastUpdate = Date.now();
+      clusterVessel.lastUpdate = Math.max(...cluster.map(v => v.lastUpdate));
       result.push(clusterVessel);
     }
   }

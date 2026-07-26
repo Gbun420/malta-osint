@@ -50,26 +50,20 @@ function provenanceFor(r: RawRecord, ctx: MapContext): Provenance {
     originalId: r.originalId,
     ingestedAt: ctx.clock.iso(),
     pipeline: ['ingest', `adapter:${r.adapterId}`, 'normalize'],
-    simulated: true,
   };
 }
 
-/** All mock data is tagged SIMULATED unless a record explicitly says otherwise. */
 function classificationFor(r: RawRecord): Classification {
   const c = r.payload.classification;
   if (typeof c === 'string') {
     const up = c.toUpperCase();
-    if (['SIMULATED', 'UNCLASSIFIED', 'OFFICIAL', 'CONFIDENTIAL', 'SECRET'].includes(up)) {
+    if (['UNCLASSIFIED', 'OFFICIAL', 'CONFIDENTIAL', 'SECRET'].includes(up)) {
       return up as Classification;
     }
   }
-  return 'SIMULATED';
+  return 'UNCLASSIFIED';
 }
 
-/**
- * Map a single raw record to an entity, or null if unmappable.
- * Dispatches on `sourceType` (the canonical feed category).
- */
 export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
   const p = r.payload;
   const ts = r.observedAt ?? ctx.clock.iso();
@@ -90,9 +84,9 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
     switch (r.sourceType) {
       case 'satellite': {
         const img: SatelliteImage = {
-          ...base('SatelliteImage', 'Mock Satellite Feed', num(p.confidence, 0.9)),
+          ...base('SatelliteImage', r.adapterId, num(p.confidence, 0.9)),
           kind: 'SatelliteImage',
-          satellite: str(p.satellite, 'SIM-SAT'),
+          satellite: str(p.satellite, 'UNKNOWN'),
           footprint: Array.isArray(p.footprint) ? (p.footprint as GeoPoint[]) : [],
           resolutionMeters: num(p.resolutionMeters, 0.5),
           cloudCoverPct: num(p.cloudCoverPct, 0),
@@ -105,10 +99,10 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
         const loc = geo(p.location);
         if (!loc) return null;
         const d: DroneAsset = {
-          ...base('DroneAsset', 'Mock Drone/Sensor Feed', num(p.confidence, 0.95)),
+          ...base('DroneAsset', r.adapterId, num(p.confidence, 0.95)),
           kind: 'DroneAsset',
-          callsign: str(p.callsign, 'SIM-UAS'),
-          platform: str(p.platform, 'mock-platform'),
+          callsign: str(p.callsign) || 'unknown',
+          platform: str(p.platform) || 'unknown',
           location: loc,
           headingDeg: typeof p.headingDeg === 'number' ? p.headingDeg : undefined,
           speedKts: typeof p.speedKts === 'number' ? p.speedKts : undefined,
@@ -123,7 +117,7 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
         const loc = geo(p.location);
         if (!loc) return null;
         const det: Detection = {
-          ...base('Detection', 'Mock Live Tracks', num(p.confidence, 0.8)),
+          ...base('Detection', r.adapterId, num(p.confidence, 0.8)),
           kind: 'Detection',
           label: str(p.label, 'track'),
           location: loc,
@@ -134,7 +128,7 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
       }
       case 'reports': {
         const rep: IntelligenceReport = {
-          ...base('IntelligenceReport', 'Mock Intelligence Reports', num(p.confidence, 0.6)),
+          ...base('IntelligenceReport', r.adapterId, num(p.confidence, 0.6)),
           kind: 'IntelligenceReport',
           title: str(p.title, 'Untitled report'),
           body: str(p.body, ''),
@@ -149,9 +143,9 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
         const loc = geo(p.location);
         if (!loc) return null;
         const u: Unit = {
-          ...base('Unit', 'Mock Blue-Force Feed', num(p.confidence, 0.99)),
+          ...base('Unit', r.adapterId, num(p.confidence, 0.99)),
           kind: 'Unit',
-          designation: str(p.designation, 'SIM-UNIT'),
+          designation: str(p.designation) || 'unknown',
           affiliation: 'friendly',
           echelon: str(p.echelon) || undefined,
           location: loc,
@@ -163,7 +157,7 @@ export function mapRecord(r: RawRecord, ctx: MapContext): AnyEntity | null {
       }
       case 'operational': {
         const ev: OperationalEvent = {
-          ...base('OperationalEvent', 'Mock Operational Dataset', num(p.confidence, 0.7)),
+          ...base('OperationalEvent', r.adapterId, num(p.confidence, 0.7)),
           kind: 'OperationalEvent',
           title: str(p.title, 'Operational event'),
           eventType: str(p.eventType, 'generic'),

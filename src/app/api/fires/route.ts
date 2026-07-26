@@ -76,6 +76,9 @@ export async function GET() {
             lng: geo.coordinates[0],
             brightness: 500,
             confidence: 'high',
+            confidenceRaw: 'high',
+            confidenceCategory: 'high' as const,
+            confidenceScore: 85,
             date: geo.date?.split('T')[0] || '',
             time: '',
             frp: 100,
@@ -126,13 +129,30 @@ function parseCSV(csv: string): any[] {
     const cols = lines[i].split(',');
     const lat = parseFloat(cols[latIdx]);
     const lng = parseFloat(cols[lngIdx]);
-    if (isNaN(lat) || isNaN(lng)) continue;
+    const brightness = parseFloat(cols[brightIdx]);
+    if (isNaN(lat) || isNaN(lng) || isNaN(brightness)) continue;
+
+    const rawConf = (cols[confIdx] || '').trim();
+
+    let confidenceScore = 50;
+    let confidenceCategory: 'low' | 'nominal' | 'high' | 'unknown' = 'unknown';
+    if (/^\d+%$/.test(rawConf)) {
+      confidenceScore = Math.min(100, Math.max(0, parseInt(rawConf, 10)));
+      confidenceCategory = confidenceScore >= 70 ? 'high' : confidenceScore >= 40 ? 'nominal' : 'low';
+    } else if (/^(low|nominal|high)$/i.test(rawConf)) {
+      const lc = rawConf.toLowerCase();
+      confidenceCategory = lc as 'low' | 'nominal' | 'high';
+      confidenceScore = lc === 'high' ? 85 : lc === 'nominal' ? 50 : 30;
+    }
 
     fires.push({
       lat: Math.round(lat * 1000) / 1000,
       lng: Math.round(lng * 1000) / 1000,
-      brightness: parseFloat(cols[brightIdx]) || 0,
-      confidence: cols[confIdx] || 'unknown',
+      brightness,
+      confidence: rawConf,
+      confidenceRaw: rawConf,
+      confidenceCategory,
+      confidenceScore,
       date: cols[dateIdx] || '',
       time: cols[timeIdx] || '',
       frp: parseFloat(cols[frpIdx]) || 0,

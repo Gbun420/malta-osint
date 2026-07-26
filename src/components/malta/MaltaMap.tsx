@@ -165,7 +165,7 @@ function MaltaMap({
             'circle-color': '#FF3D3D',
             'circle-stroke-width': 1,
             'circle-stroke-color': '#FF6B00',
-            'circle-opacity': ['interpolate', ['linear'], ['get', 'confidence'], 0, 0.4, 100, 0.9],
+            'circle-opacity': ['interpolate', ['linear'], ['get', 'confidenceScore'], 0, 0.4, 100, 0.9],
           },
         });
 
@@ -305,10 +305,15 @@ function MaltaMap({
     }
 
     if (data?.environment?.fires && activeLayers.fires) {
-      const fc = { type: 'FeatureCollection' as const, features: data.environment.fires.map((f: any) => ({
+      const fc = { type: 'FeatureCollection' as const, features: data.environment.fires.filter((f: any) => {
+        const lat = parseFloat(f.lat);
+        const lng = parseFloat(f.lng);
+        const b = parseFloat(f.brightness);
+        return !isNaN(lat) && !isNaN(lng) && !isNaN(b);
+      }).map((f: any) => ({
         type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [f.lng, f.lat] },
-        properties: { brightness: f.brightness, confidence: f.confidence },
+        geometry: { type: 'Point' as const, coordinates: [parseFloat(f.lng), parseFloat(f.lat)] },
+        properties: { brightness: parseFloat(f.brightness), confidenceScore: f.confidenceScore ?? 50 },
       })) };
       (map.getSource('fires') as maplibregl.GeoJSONSource)?.setData(fc);
     }

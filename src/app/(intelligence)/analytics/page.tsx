@@ -196,23 +196,23 @@ export function AnalyticsDashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [eventsData, sourcesData, analyticsData] = await Promise.all([
+        const [eventsResult, sourcesData, analyticsData] = await Promise.all([
           fetchIntelligenceEvents(),
           fetchSourceHealth(),
           fetchAnalytics()
         ]);
-        setEvents(eventsData);
+        setEvents(eventsResult.events);
         setSourceHealth(sourcesData);
         setAnalytics(analyticsData);
       } catch (error) {
         console.error('Failed to load analytics data:', error);
         setAnalyticsError('Failed to load analytics from API. Using local computation.');
         // Fallback: compute locally
-        const [eventsData, sourcesData] = await Promise.all([
+        const [eventsResult2, sourcesData] = await Promise.all([
           fetchIntelligenceEvents(),
           fetchSourceHealth()
         ]);
-        setEvents(eventsData);
+        setEvents(eventsResult2.events);
         setSourceHealth(sourcesData);
       } finally {
         setLoading(false);

@@ -1,13 +1,3 @@
-/**
- * Smart System — public barrel.
- *
- * MSS-inspired, human-in-the-loop data-fusion capability for Malta OSINT.
- * Entirely gated behind `ENABLE_MSS_SMART_SYSTEM_MODULE`; decision-support only.
- *
- * Layers: ingestion (real feeds) → ontology → models (advisory) →
- * operational apps → human review. See docs/SMART_SYSTEM.md.
- */
-
 export {
   SMART_SYSTEM_FLAG,
   isSmartSystemEnabled,
@@ -18,7 +8,6 @@ export {
 export { createSmartSystem, getSmartSystem, resetSmartSystem, SmartSystem } from './system';
 export type { SmartSystemOptions, AnalysisResult } from './system';
 
-// Types most likely needed by consumers (API routes, tests).
 export type {
   Classification,
   SourceType,

@@ -234,7 +234,7 @@ export function makeEntityBase(args: {
     source: args.source,
     timestamp: args.timestamp,
     confidence: args.confidence,
-    classification: args.classification ?? 'SIMULATED',
+    classification: args.classification ?? 'UNCLASSIFIED',
     provenance: args.provenance,
     tags: args.tags,
     audit: {

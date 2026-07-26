@@ -10,6 +10,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/smart_system/**/*.test.ts'],
+    include: ['src/smart_system/**/*.test.ts', 'src/services/intelligence/**/*.test.ts', 'src/app/api/config/**/*.test.ts'],
   },
 });

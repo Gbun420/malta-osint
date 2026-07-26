@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * SmartSystemPanel — feature-flagged, read/review-focused surface for the
- * MSS-inspired Smart System module. Rendered only when
- * ENABLE_MSS_SMART_SYSTEM_MODULE is enabled (the parent guards visibility).
- *
- * Uses existing UI conventions (glass-panel, hud-text, CSS vars, lucide icons,
- * framer-motion). It does NOT alter or replace any existing GUI. Six views:
- * Data Feed Status, Ontology Objects, AI Recommendations, COA Comparison,
- * Human Review Queue, Audit Log. All model output is advisory; the only
- * mutating action is recording a human review decision.
- */
-
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Activity, Database, Zap, Layers, Newspaper, Play, X, ChevronDown, ChevronUp } from 'lucide-react';
@@ -81,7 +69,6 @@ export default function SmartSystemPanel() {
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem('smart-system-run-key') : null;
       let res = await doRun(stored);
-      // Guarded endpoint: prompt the operator for the run key, then retry.
       if (res.status === 401 && typeof window !== 'undefined') {
         const entered = window.prompt('Operator run key required (SMART_SYSTEM_RUN_KEY):');
         if (!entered) { setError('Run is guarded — operator key required.'); return; }
@@ -116,7 +103,6 @@ export default function SmartSystemPanel() {
       initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
       className="glass-panel p-3 pointer-events-auto flex flex-col max-h-[80vh] thirdeye-glow"
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => setExpanded(e => !e)} className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-[var(--gold-primary)]" />
@@ -139,12 +125,10 @@ export default function SmartSystemPanel() {
       <AnimatePresence>
         {expanded && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="flex flex-col min-h-0">
-            {/* Human-in-the-loop notice */}
             <div className="mb-2 px-2 py-1.5 rounded border border-[var(--cyan-primary)]/30 bg-[var(--cyan-primary)]/5 text-[8px] font-mono text-[var(--text-muted)] leading-relaxed">
-              AI outputs are <span className="text-[var(--cyan-primary)]">recommendations</span>, not decisions. All actions require human confirmation. Simulation-safe.
+              AI outputs are <span className="text-[var(--cyan-primary)]">recommendations</span>, not decisions. All actions require human confirmation.
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-0.5 mb-2 overflow-x-auto styled-scrollbar">
               {TABS.map(t => {
                 const Icon = t.icon;
@@ -157,7 +141,6 @@ export default function SmartSystemPanel() {
               })}
             </div>
 
-            {/* Body */}
             <div className="overflow-y-auto styled-scrollbar min-h-[120px] max-h-[52vh] pr-1">
               {loading && <div className="text-center py-6 text-[9px] font-mono text-[var(--text-muted)] tracking-widest">LOADING…</div>}
               {error && <div className="px-2 py-1.5 rounded border border-[#FF4081]/40 bg-[#FF4081]/10 text-[#FF4081] text-[9px] font-mono">{error}</div>}
@@ -207,8 +190,12 @@ function FeedsView({ data }: { data: any }) {
       </div>
       <div className="space-y-0.5">
         {(data.feeds || []).map((f: any) => (
-          <Row key={f.adapterId} label={`${f.adapterId} (${f.route})`} value={`${f.status} · ${f.recordsLastPoll}`}
-            tone={f.status === 'online' ? 'green' : f.status === 'degraded' ? 'red' : undefined} />
+          <div key={f.adapterId} className="flex items-center gap-1">
+            <div className="flex-1">
+              <Row key={f.adapterId} label={`${f.adapterId} (${f.route})`} value={`${f.status} · ${f.recordsLastPoll}`}
+                tone={f.status === 'online' ? 'green' : f.status === 'degraded' ? 'red' : f.status === 'unavailable' ? 'cyan' : undefined} />
+            </div>
+          </div>
         ))}
         {(!data.feeds || data.feeds.length === 0) && <div className="text-[9px] font-mono text-[var(--text-muted)] py-2 text-center">No feeds. Press RUN FUSION.</div>}
       </div>

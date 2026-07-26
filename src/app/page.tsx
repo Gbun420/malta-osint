@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
@@ -42,6 +42,8 @@ export default function MaltaDashboard() {
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showSmartSystem, setShowSmartSystem] = useState(false);
+
+  const pathname = usePathname();
 
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
     enabled: activeLayers.vessels,
@@ -168,9 +170,11 @@ export default function MaltaDashboard() {
         <div className="gotham-command-bar__section">
           <div className="flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${
-              aisWsStatus === 'connected' ? 'bg-[var(--alert-green)]' :
-              aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
-              'bg-[var(--alert-red)]'
+              aisWsStatus === 'live-stream' || aisWsStatus === 'live-no-positions'
+                ? 'bg-[var(--alert-green)]'
+              : aisWsStatus === 'connecting' || aisWsStatus === 'cached-snapshot' || aisWsStatus === 'stale-snapshot'
+                ? 'bg-[var(--alert-orange)] animate-pulse'
+              : 'bg-[var(--alert-red)]'
             }`} />
             <span className="text-[12px] font-mono text-[var(--text-secondary)]">
               AIS: {aisWsStatus === 'disabled' ? 'N/A' : aisWsStatus.toUpperCase()}
@@ -202,7 +206,6 @@ export default function MaltaDashboard() {
 
       <nav className="absolute left-3 top-1/2 -translate-y-1/2 z-[300] flex flex-col items-center gap-1 glass-panel py-3 px-2">
         {(() => {
-          const pathname = usePathname();
           const navItems: ({ href: string; label: string; icon: any } | { divider: true })[] = [
             { href: '/', label: 'Command Centre', icon: Map },
             { href: '/brief', label: "Minister's Brief", icon: FileText },

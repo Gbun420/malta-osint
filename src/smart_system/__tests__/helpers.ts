@@ -80,7 +80,6 @@ export function makeDetection(
         sourceType: 'live_tracks',
         ingestedAt: clock.iso(),
         pipeline: ['test'],
-        simulated: true,
       },
       clock,
     }),

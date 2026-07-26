@@ -13,13 +13,16 @@ export async function GET() {
 
   const ss = getSmartSystem();
   await ss.hydrate();
+
+  const feeds = ss.ingestion.feedStatus();
+
   return NextResponse.json({
     enabled: true,
     reason: smartSystemStatusReason(),
     decisionSupportOnly: true,
     persistence: ss.persistenceKind,
     runRequiresKey: isRunKeyConfigured(),
-    feeds: ss.ingestion.feedStatus(),
+    feeds,
     ontologyCounts: ss.ontologyCounts(),
     ontologyTotal: ss.ontologyTotal(),
     models: ss.models.list(),
