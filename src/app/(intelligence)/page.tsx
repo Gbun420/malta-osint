@@ -128,7 +128,7 @@ export default function CommandCentre() {
           ].map(item => (
             <Link
               key={item.label}
-              href="/events?relevance=" + item.label.toLowerCase()
+              href={`/events?relevance=${item.label.toLowerCase()}`}
               className="rounded-lg border border-gold/10 bg-white/5 p-3 text-center hover:border-gold/30"
             >
               <div className={`text-2xl font-bold ${item.color}`}>{item.count}</div>

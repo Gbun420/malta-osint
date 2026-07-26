@@ -10,15 +10,15 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![MapLibre](https://img.shields.io/badge/MapLibre_GL-GPU_Rendered-396CB2?style=for-the-badge)](https://maplibre.org)
 [![License](https://img.shields.io/badge/License-MIT-D4AF37?style=for-the-badge)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/eli-labz/Malta-OSINT?style=for-the-badge&color=FFD700)](https://github.com/eli-labz/Malta-OSINT/stargazers)
-[![Forks](https://img.shields.io/github/forks/eli-labz/Malta-OSINT?style=for-the-badge&color=4CAF50)](https://github.com/eli-labz/Malta-OSINT/network/members)
-[![Issues](https://img.shields.io/github/issues/eli-labz/Malta-OSINT?style=for-the-badge)](https://github.com/eli-labz/Malta-OSINT/issues)
+[![Stars](https://img.shields.io/github/stars/eli-labz/Third-Eye?style=for-the-badge&color=FFD700)](https://github.com/eli-labz/Third-Eye/stargazers)
+[![Forks](https://img.shields.io/github/forks/eli-labz/Third-Eye?style=for-the-badge&color=4CAF50)](https://github.com/eli-labz/Third-Eye/network/members)
+[![Issues](https://img.shields.io/github/issues/eli-labz/Third-Eye?style=for-the-badge)](https://github.com/eli-labz/Third-Eye/issues)
 
 **A real-time global intelligence dashboard that aggregates live flight tracking, CCTV networks, earthquake monitoring, conflict zone mapping, and 24/7 news feeds into a single GPU-accelerated interface.**
 
-[🌐 Live Demo](https://geospatialcommand.center) · [🐛 Report Bug](https://github.com/eli-labz/Malta-OSINT/issues) · [✨ Request Feature](https://github.com/eli-labz/Malta-OSINT/issues) · [⭐ Star This Repo](https://github.com/eli-labz/Malta-OSINT/stargazers)
+[🌐 Live Demo](https://geospatialcommand.center) · [🐛 Report Bug](https://github.com/eli-labz/Third-Eye/issues) · [✨ Request Feature](https://github.com/eli-labz/Third-Eye/issues) · [⭐ Star This Repo](https://github.com/eli-labz/Third-Eye/stargazers)
 
-> **If Malta OSINT is useful to you, please consider giving it a ⭐ — it helps the project grow and reach more people!**
+> **If Third Eye is useful to you, please consider giving it a ⭐ — it helps the project grow and reach more people!**
 
 </div>
 
@@ -26,13 +26,13 @@
 
 ## 🔍 Overview
 
-Malta OSINT is a **production-grade OSINT platform** that provides real-time situational awareness across 13+ intelligence domains — all in one GPU-accelerated interface. Built with Next.js 16 and MapLibre GL, every data point is rendered via WebGL for **60fps performance** even with thousands of concurrent entities on-screen.
+Third Eye is a **production-grade OSINT platform** that provides real-time situational awareness across 13+ intelligence domains — all in one GPU-accelerated interface. Built with Next.js 16 and MapLibre GL, every data point is rendered via WebGL for **60fps performance** even with thousands of concurrent entities on-screen.
 
 No API keys required to get started. Clone, run, and you're live in under 2 minutes.
 
 ---
 
-## ✨ Why Malta OSINT?
+## ✨ Why Third Eye?
 
 - 🌍 **16 live data layers** — aviation, maritime, CCTV, seismic, fires, news, weather, space, cyber, conflict, crypto, sanctions, and more
 - ⚡ **WebGL-powered** — GPU-accelerated map rendering, not DOM-based. Handles thousands of entities at 60fps.
@@ -76,8 +76,8 @@ No API keys required to get started. Clone, run, and you're live in under 2 minu
 ### Option 1 — npm (2 minutes)
 
 ```bash
-git clone https://github.com/eli-labz/Malta-OSINT.git
-cd Malta-OSINT
+git clone https://github.com/eli-labz/Third-Eye.git
+cd Third-Eye
 npm install
 npm run dev
 ```
@@ -87,8 +87,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. No API keys needed
 ### Option 2 — Docker
 
 ```bash
-git clone https://github.com/eli-labz/Malta-OSINT.git
-cd Malta-OSINT
+git clone https://github.com/eli-labz/Third-Eye.git
+cd Third-Eye
 cp .env.template .env   # optional — configure keys / port
 docker compose up -d
 ```
@@ -106,7 +106,7 @@ docker run -d -p 3000:3000 --env-file .env ghcr.io/aiacos/third-eye:latest
 
 ## ⚙️ Configuration
 
-Malta OSINT works **without any API keys** — all core layers use public, keyless sources. Copy `.env.template` to `.env` and configure only what you need:
+Third Eye works **without any API keys** — all core layers use public, keyless sources. Copy `.env.template` to `.env` and configure only what you need:
 
 ```env
 # Published host port (container always listens on 3000). Default: 3000
@@ -252,7 +252,7 @@ Contributions are what make the open-source community amazing. Any contributions
 - [ ] Historical playback mode
 - [ ] Mobile-responsive layout
 
-Have an idea? [Open a feature request!](https://github.com/eli-labz/Malta-OSINT/issues)
+Have an idea? [Open a feature request!](https://github.com/eli-labz/Third-Eye/issues)
 
 ---
 
@@ -266,8 +266,8 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 **Built with ❤️ by [eli-labz](https://github.com/eli-labz)**
 
-⭐ **If you find Malta OSINT useful, please star the repo — it helps others discover it!** ⭐
+⭐ **If you find Third Eye useful, please star the repo — it helps others discover it!** ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=eli-labz/Malta-OSINT&type=Date)](https://star-history.com/#eli-labz/Malta-OSINT&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=eli-labz/Third-Eye&type=Date)](https://star-history.com/#eli-labz/Third-Eye&Date)
 
 </div>

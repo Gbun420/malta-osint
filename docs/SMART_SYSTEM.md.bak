@@ -1,7 +1,7 @@
 # Smart System Module (MSS-inspired data fusion)
 
 A modular, **feature-flagged**, **human-in-the-loop** data-fusion capability layered
-conservatively onto Malta OSINT. It is **off by default** and **invisible** unless
+conservatively onto Third Eye. It is **off by default** and **invisible** unless
 explicitly enabled. Nothing in it performs autonomous, kinetic, or real-world
 operational tasking — every output is a **decision-support recommendation** that
 requires human confirmation, and all model work is simulation-safe.

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MinisterBriefItem } from '@/intelligence/briefing/MinisterBriefItem';
+import { MinisterBriefItem } from '@/intelligence/types';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
 import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 
@@ -28,17 +28,17 @@ export default function MinisterBrief() {
         eventTime: '2024-06-15T10:00:00Z',
         firstObservedAt: '2024-06-14T14:30:00Z',
         countries: [
-          { name: 'Malta', alpha2: 'MT', role: 'sovereign' },
-          { name: 'Germany', alpha2: 'DE', role: 'trading partner' },
-          { name: 'France', alpha2: 'FR', role: 'trading partner' }
+          { name: 'Malta', alpha2: 'MT' },
+          { name: 'Germany', alpha2: 'DE' },
+          { name: 'France', alpha2: 'FR' }
         ],
         locations: [
-          { lat: 35.9, lng: 14.4, type: 'country' },
-          { lat: 52.5, lng: 13.4, type: 'country' }
+          { lat: 35.9, lng: 14.4, countryCode: 'MT' },
+          { lat: 52.5, lng: 13.4, countryCode: 'DE' }
         ],
         organisations: [
-          { name: 'EU Commission', type: 'government' },
-          { name: 'Malta Ministry of Foreign Affairs', type: 'government' }
+          { id: 'eu-commission', name: 'EU Commission', type: 'government' },
+          { id: 'maltese-mfa', name: 'Malta Ministry of Foreign Affairs', type: 'government' }
         ],
         categories: ['trade', 'diplomatic'],
         severity: 4,
@@ -47,8 +47,8 @@ export default function MinisterBrief() {
         confidenceLabel: 'high',
         verificationState: 'multi-source',
         evidence: [
-          { id: 'ev1', source: 'EU Official Statement', type: 'official' },
-          { id: 'ev2', source: 'Malta Gazette', type: 'local', verified: true }
+          { evidenceId: 'ev1', publisher: 'EU Official Statement' },
+          { evidenceId: 'ev2', publisher: 'Malta Gazette', publicationTime: '2024-06-14T14:30:00Z' }
         ],
         uncertainties: ['Exact financial terms not disclosed'],
         possibleFollowUp: [
