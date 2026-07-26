@@ -98,7 +98,7 @@ export default function CommandCentre() {
                   </div>
                   <div className="ml-4 flex flex-col items-end gap-1">
                     <MaltaRelevanceBadge score={event.maltaRelevanceScore} />
-                    <ConfidenceBadge confidence={event.confidenceScore} label="moderate" />
+                    <ConfidenceBadge value={event.confidenceScore} label="moderate" />
                     <VerificationBadge state={event.verificationState} />
                   </div>
                 </div>
