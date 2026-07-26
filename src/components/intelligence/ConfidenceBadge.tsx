@@ -5,7 +5,7 @@ interface ConfidenceBadgeProps {
   label: 'confirmed' | 'high' | 'moderate' | 'low' | 'unverified';
 }
 
-export function ConfidenceBadge({ confidence, label }: ConfidenceBadgeProps) {
+export function ConfidenceBadge({ value, label }: ConfidenceBadgeProps) {
   const classes = {
     confirmed: 'bg-green-500/20 text-emerald-400 border-emerald-500/30',
     high: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
@@ -18,7 +18,7 @@ export function ConfidenceBadge({ confidence, label }: ConfidenceBadgeProps) {
   
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm ${CONFIDENCE_COLORS[label]}`}>
-      {confidence}%
+      {value}%
       {label}
     </span>
   );

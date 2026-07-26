@@ -9,6 +9,7 @@ import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
 import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
 import { IntelligenceEvent } from '@/intelligence/types';
 import { fetchIntelligenceEvents } from '@/services/intelligence/eventsService';
+import { confidenceLabel } from '@/intelligence/confidence';
 
 interface FilterState {
   search: string;
@@ -54,13 +55,18 @@ export default function GlobalEvents() {
   });
 
   // Available filter options derived from events
-  const availableFilters = useMemo(() => ({
-    severity: [...new Set(events.map(e => e.severity).filter(Boolean))].sort((a, b) => a - b),
-    verificationStates: [...new Set(events.map(e => e.verificationState).filter(Boolean))],
-    eventTypes: [...new Set(events.flatMap(e => e.categories || []).filter(Boolean))],
-    sources: [...new Set(events.map(e => e.sourceId).filter(Boolean))],
-    status: [...new Set(events.map(e => e.status).filter(Boolean))]
-  }), [events]);
+  const availableFilters = useMemo(() => {
+    const evidenceIds = new Set<string>();
+    events.forEach(e => e.evidenceIds?.forEach(id => evidenceIds.add(id)));
+    
+    return {
+      severity: [...new Set(events.map(e => e.severity).filter(Boolean))].sort((a, b) => a - b),
+      verificationStates: [...new Set(events.map(e => e.verificationState).filter(Boolean))],
+      eventTypes: [...new Set(events.flatMap(e => e.categories || []).filter(Boolean))],
+      sources: [...evidenceIds],
+      status: [...new Set(events.map(e => e.status).filter(Boolean))]
+    };
+  }, [events]);
 
   // Apply filters to events
   const filteredEvents = useMemo(() => {
@@ -106,8 +112,10 @@ export default function GlobalEvents() {
       }
 
       // Source filter
-      if (filters.sources.length > 0 && event.sourceId) {
-        if (!filters.sources.includes(event.sourceId)) return false;
+      if (filters.sources.length > 0) {
+        const eventSourceIds = event.evidenceIds || [];
+        const hasMatchingSource = eventSourceIds.some(id => filters.sources.includes(id));
+        if (!hasMatchingSource) return false;
       }
 
       // Status filter
@@ -174,10 +182,9 @@ export default function GlobalEvents() {
       summary: event.summary,
       severity: event.severity,
       confidenceScore: event.confidenceScore,
-      confidenceLabel: event.confidenceLabel,
+      confidenceLabel: confidenceLabel(event.confidenceScore),
       verificationState: event.verificationState,
       eventTime: event.eventTime,
-      sourceId: event.sourceId,
       status: event.status,
       categories: event.categories?.join('; '),
       countries: event.countries?.map(c => c.name).join('; ')
@@ -214,7 +221,7 @@ export default function GlobalEvents() {
     filtered: filteredEvents.length,
     critical: filteredEvents.filter(e => e.severity >= 4).length,
     highConfidence: filteredEvents.filter(e => (e.confidenceScore || 0) >= 80).length,
-    verified: filteredEvents.filter(e => e.verificationState === 'verified' || e.verificationState === 'multi-source').length
+    verified: filteredEvents.filter(e => e.verificationState === 'official-confirmation' || e.verificationState === 'multi-source').length
   }), [events, filteredEvents]);
 
   return (
@@ -492,8 +499,8 @@ export default function GlobalEvents() {
                     {event.eventTime && (
                       <span>📅 {new Date(event.eventTime).toLocaleDateString()}</span>
                     )}
-                    {event.sourceId && (
-                      <span>📡 {event.sourceId}</span>
+                    {event.provenance?.adapterId && (
+                      <span>📡 {event.provenance.adapterId}</span>
                     )}
                     {event.countries && event.countries.length > 0 && (
                       <span>🌍 {event.countries.slice(0, 2).map(c => c.name).join(', ')}</span>
@@ -518,13 +525,13 @@ export default function GlobalEvents() {
 
                 {/* Badges Row */}
                 <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
-                  <ConfidenceBadge confidence={event.confidenceScore || 0} />
+                  <ConfidenceBadge value={event.confidenceScore || 0} label={confidenceLabel(event.confidenceScore || 0)} />
                   <VerificationBadge state={event.verificationState || 'unverified'} />
                   {event.status && (
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                       event.status === 'active' ? 'bg-green-500/20 text-green-400' :
                       event.status === 'resolved' ? 'bg-blue-500/20 text-blue-400' :
-                      event.status === 'investigating' ? 'bg-yellow-500/20 text-yellow-400' :
+                      event.status === 'developing' ? 'bg-yellow-500/20 text-yellow-400' :
                       'bg-gray-500/20 text-gray-400'
                     }`}>
                       {event.status}

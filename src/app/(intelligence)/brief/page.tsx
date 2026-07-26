@@ -40,6 +40,7 @@ export default function MinisterBrief() {
           { id: 'eu-commission', name: 'EU Commission', type: 'government' },
           { id: 'maltese-mfa', name: 'Malta Ministry of Foreign Affairs', type: 'government' }
         ],
+        people: [],
         categories: ['trade', 'diplomatic'],
         severity: 4,
         maltaRelevanceScore: 75,
@@ -52,11 +53,12 @@ export default function MinisterBrief() {
         ],
         uncertainties: ['Exact financial terms not disclosed'],
         possibleFollowUp: [
-          'Negotiation of bilateral trade agreements',
-          'Implementation of regulatory framework',
-          'Monitoring of trade flows'
+          { action: 'Negotiation of bilateral trade agreements', priority: 'this-week' },
+          { action: 'Implementation of regulatory framework', priority: 'this-week' },
+          { action: 'Monitoring of trade flows', priority: 'monitor' }
         ],
-        humanReviewStatus: 'pending'
+        humanReviewStatus: 'pending',
+        lastUpdatedAt: '2024-06-15T10:00:00Z'
       }
     ];
     
@@ -150,7 +152,7 @@ export default function MinisterBrief() {
                 <p className="text-sm text-white/60">Possible Follow-Up:</p>
                 <ul className="list-disc pl-4">
                   {item.possibleFollowUp.map((followUp, i) => (
-                    <li key={i} className="text-sm text-yellow-400">{followUp}</li>
+                    <li key={i} className="text-sm text-yellow-400">{followUp.action}</li>
                   ))}
                 </ul>
               </div>

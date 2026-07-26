@@ -1,4 +1,4 @@
-import { ApplicationShell } from '@/components/intelligence/ApplicationShell';
+import ApplicationShell from '@/components/intelligence/ApplicationShell';
 import type { ReactNode } from 'react';
 
 interface LayoutProps {
@@ -7,7 +7,7 @@ interface LayoutProps {
 
 export default function IntelligenceLayout({ children }: LayoutProps) {
   return (
-    <ApplicationShell activeRoute={'/'}>
+    <ApplicationShell>
       {children}
     </ApplicationShell>
   );
