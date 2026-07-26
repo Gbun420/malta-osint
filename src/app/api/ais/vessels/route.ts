@@ -2,30 +2,22 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-interface VesselAPIVessel {
+interface VesselAPIPosition {
   mmsi?: number;
-  MMSI?: number;
   lat?: number;
-  latitude?: number;
-  lng?: number;
-  longitude?: number;
+  lon?: number;
   sog?: number;
-  speed?: number;
   cog?: number;
   heading?: number;
-  type?: string;
-  ship_type?: string;
+  shipType?: number;
   name?: string;
-  ship_name?: string;
   destination?: string;
-  flag?: string;
   callSign?: string;
-  call_sign?: string;
-  imo?: string;
-  IMO?: string;
+  imo?: number;
   draught?: number;
   eta?: string;
-  ship_type_id?: number;
+  timestamp?: string;
+  status?: number;
 }
 
 export async function GET() {
@@ -42,13 +34,31 @@ export async function GET() {
   }
 
   try {
+    const params = new URLSearchParams({
+      'filter.lonLeft': '-180',
+      'filter.latBottom': '-90',
+      'filter.lonRight': '180',
+      'filter.latTop': '90',
+      'pagination.limit': '50',
+    });
+
     const res = await fetch(
-      `https://api.vesselapi.com/v1/tracking?bbox=-90,-180,90,180&limit=500`,
+      `https://api.vesselapi.com/v1/location/vessels/bounding-box?${params}`,
       {
         headers: { Authorization: `Bearer ${apiKey}` },
         signal: AbortSignal.timeout(15000),
       }
     );
+
+    if (res.status === 402) {
+      return NextResponse.json({
+        vessels: [],
+        count: 0,
+        connected: false,
+        error: 'VesselAPI satellite credits exhausted',
+        timestamp: Date.now(),
+      });
+    }
 
     if (!res.ok) {
       return NextResponse.json({
@@ -61,38 +71,30 @@ export async function GET() {
     }
 
     const data = await res.json();
-    const rawVessels: VesselAPIVessel[] = data?.vessels || data?.data || [];
+    const rawPositions: VesselAPIPosition[] = data?.vesselPositions || [];
 
-    const vessels = rawVessels
-      .filter((v: VesselAPIVessel) => {
-        const mmsi = v.mmsi || v.MMSI;
-        const lat = v.lat ?? v.latitude;
-        const lng = v.lng ?? v.longitude;
-        return mmsi && lat != null && lng != null;
-      })
-      .map((v: VesselAPIVessel) => {
-        const mmsi = v.mmsi || v.MMSI!;
-        return {
-          mmsi,
-          name: v.name || v.ship_name || `SAT-${mmsi}`,
-          lat: v.lat ?? v.latitude!,
-          lng: v.lng ?? v.longitude!,
-          sog: v.sog ?? v.speed ?? 0,
-          cog: v.cog ?? v.heading ?? 0,
-          heading: v.cog ?? v.heading ?? 0,
-          navStatus: 0,
-          rot: 0,
-          type: v.type || v.ship_type || 'unknown',
-          dimension: { a: 0, b: 0, c: 0, d: 0 },
-          draught: v.draught ?? 0,
-          destination: v.destination || '',
-          eta: v.eta || '',
-          callSign: v.callSign || v.call_sign || '',
-          imo: v.imo ? String(v.imo) : (v.IMO ? String(v.IMO) : ''),
-          lastUpdate: Date.now(),
-          positionAge: 0,
-        };
-      });
+    const vessels = rawPositions
+      .filter((v: VesselAPIPosition) => v.mmsi && v.lat != null && v.lon != null)
+      .map((v: VesselAPIPosition) => ({
+        mmsi: v.mmsi!,
+        name: v.name || `SAT-${v.mmsi}`,
+        lat: v.lat!,
+        lng: v.lon!,
+        sog: v.sog ?? 0,
+        cog: v.cog ?? 0,
+        heading: v.heading ?? v.cog ?? 0,
+        navStatus: v.status ?? 0,
+        rot: 0,
+        type: v.shipType != null ? String(v.shipType) : 'unknown',
+        dimension: { a: 0, b: 0, c: 0, d: 0 },
+        draught: v.draught ?? 0,
+        destination: v.destination || '',
+        eta: v.eta || '',
+        callSign: v.callSign || '',
+        imo: v.imo ? String(v.imo) : '',
+        lastUpdate: Date.now(),
+        positionAge: 0,
+      }));
 
     return NextResponse.json({
       vessels,
