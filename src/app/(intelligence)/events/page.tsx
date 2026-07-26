@@ -45,6 +45,8 @@ export default function GlobalEvents() {
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<EventsResult['meta'] | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     severity: [],
@@ -134,7 +136,7 @@ export default function GlobalEvents() {
     const loadEvents = async () => {
       try {
         setError(null);
-        const result = await fetchIntelligenceEvents();
+        const result = await fetchIntelligenceEvents(currentPage, pageSize);
         setEvents(result.events);
         setMeta(result.meta);
       } catch (err) {
@@ -150,7 +152,7 @@ export default function GlobalEvents() {
       }
     };
     loadEvents();
-  }, []);
+  }, [currentPage]);
 
   // Handle filter changes
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
@@ -178,6 +180,7 @@ export default function GlobalEvents() {
       sources: [],
       status: []
     });
+    setCurrentPage(1);
   };
 
   const hasActiveFilters = Object.values(filters).some(v => 
@@ -577,8 +580,33 @@ export default function GlobalEvents() {
         )}
       </div>
 
-      {/* Source Metadata */}
-      {meta && events.length > 0 && (
+{/* Pagination */}
+        {(meta?.recordCount ?? events.length) > pageSize && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+            <div className="text-xs text-white/50 font-mono">
+              Page {currentPage} • {events.length} shown of {meta?.recordCount ?? '…'} total
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage <= 1}
+                className="px-3 py-1.5 rounded text-xs font-medium bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={events.length < pageSize}
+                className="px-3 py-1.5 rounded text-xs font-medium bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Source Metadata */}
+        {meta && events.length > 0 && (
         <div className="text-xs text-white/40 flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-white/5">
           <span>Sources: {meta.sources.join(', ') || 'none'}</span>
           <span>Cache: {meta.cache.state} ({meta.cache.ageSeconds}s)</span>

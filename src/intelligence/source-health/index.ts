@@ -17,17 +17,18 @@ export function determineHealth(params: {
   if (!def) return 'disabled';
   if (params.authenticationState === 'not-configured') return 'unconfigured';
 
+  if (params.httpStatus !== null) {
+    if (params.httpStatus >= 500) return 'error';
+    if (params.httpStatus === 429) return 'rate-limited';
+    if (params.httpStatus === 401 || params.httpStatus === 403) return 'authentication-required';
+  }
+
   if (params.rateLimitState === 'exceeded') return 'rate-limited';
   if (params.rateLimitState === 'approaching') return 'degraded';
   if (params.authenticationState === 'invalid') return 'authentication-required';
 
   if (params.consecutiveFailures >= 3) return 'error';
   if (params.consecutiveFailures >= 1) return 'degraded';
-
-  if (params.httpStatus === null) return 'error';
-  if (params.httpStatus >= 500) return 'error';
-  if (params.httpStatus === 429) return 'rate-limited';
-  if (params.httpStatus === 401 || params.httpStatus === 403) return 'authentication-required';
 
   if (params.lastSuccessAt && def) {
     const staleness = Date.now() - new Date(params.lastSuccessAt).getTime();

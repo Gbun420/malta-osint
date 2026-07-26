@@ -1,149 +1,108 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 
-interface SidebarProps {
-  activeRoute: string;
-  isOpen: boolean;
-  onToggle: () => void;
+interface SidebarNavItem {
+  href: string;
+  label: string;
+  group: string;
 }
 
-export function Sidebar({ activeRoute, isOpen, onToggle }: SidebarProps) {
+const NAV_ITEMS: SidebarNavItem[] = [
+  { href: '/', label: 'Command Centre', group: 'Platform' },
+  { href: '/brief', label: "Minister's Brief", group: 'Intelligence' },
+  { href: '/events', label: 'Global Events', group: 'Intelligence' },
+  { href: '/malta-impact', label: 'Malta Impact', group: 'Intelligence' },
+  { href: '/countries', label: 'Countries', group: 'Intelligence' },
+  { href: '/sanctions', label: 'Sanctions', group: 'Intelligence' },
+  { href: '/maritime', label: 'Maritime', group: 'Domains' },
+  { href: '/aviation', label: 'Aviation', group: 'Domains' },
+  { href: '/review', label: 'Review Queue', group: 'Workflow' },
+  { href: '/sources', label: 'Source Health', group: 'Workflow' },
+  { href: '/audio', label: 'Audio Intel', group: 'Workflow' },
+  { href: '/docs', label: 'API Docs', group: 'System' },
+  { href: '/settings', label: 'Settings', group: 'System' },
+];
+
+const GROUP_LABELS: Record<string, string> = {
+  Platform: 'Platform',
+  Intelligence: 'Intelligence',
+  Domains: 'Domains',
+  Workflow: 'Workflow',
+  System: 'System',
+};
+
+export function Sidebar({ activeRoute, onToggle }: { activeRoute: string; onToggle: () => void }) {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <aside className="fixed inset-y-0 left-0 w-64 bg-void/95 border-r border-gold/20">
-      <div className="p-4">
-        <button 
-          className="hamburger hamburger-open" 
-          onClick={onToggle}
-          aria-label="Toggle menu"
-        >
-          <span className="hamburger hamburger-open"></span>
-          <span className="hamburger hamburger-open"></span>
-          <span className="hamburger hamburger-open"></span>
-        </button>
-      </div>
-      
-      <div className="p-4">
-        <Link 
-          href="/" 
-          className="block p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          Command Centre
-        </Link>
-        
-        <Link 
-          href="/brief" 
-          className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          Minister&apos;s Brief
-        </Link>
-        
-        <Link 
-          href="/events" 
-          className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          Global Events
-        </Link>
-        
-        <Link 
-          href="/malta-impact" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          Malta Impact
-        </Link>
-        
-        <Link 
-          href="/countries" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          Countries
-        </Link>
-        
-        <Link 
-          href="/eu" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-        >
-          <span className="hamburger hamburger-open"></span>
-          EU & Multilateral
-        </Link>
-        
-        <Link 
-            href="/sanctions" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Sanctions
-          </Link>
-          
-          <Link 
-            href="/maritime" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Maritime
-          </Link>
-          
-          <Link 
-            href="/aviation" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Aviation
-          </Link>
-          
-          <Link 
-            href="/economic" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Economic Security
-          </Link>
-          
-          <Link 
-            href="/humanitarian" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Humanitarian
-          </Link>
-          
-          <Link 
-            href="/review" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Review Queue
-          </Link>
-          
-          <Link 
-            href="/sources" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Source Health
-          </Link>
-          
-          <Link 
-            href="/audio" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Audio Intelligence
-          </Link>
-          
-          <Link 
-            href="/settings" 
-            className="flex items-center gap-2 p-2 rounded-md text-white/70 hover:bg-gold/10"
-          >
-            <span className="hamburger hamburger-open"></span>
-            Settings
-          </Link>
+    <aside className="sidebar" style={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}>
+      <div className="sidebar-inner">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-row">
+            <div className="sidebar-brand-mark" aria-hidden="true">M</div>
+            {!collapsed && (
+              <div className="sidebar-brand-text">
+                <div className="sidebar-brand-name">MALTA OSINT</div>
+                <div className="sidebar-brand-tag">INTELLIGENCE</div>
+              </div>
+            )}
+          </div>
         </div>
-      </aside>
+
+        <nav className="sidebar-nav" aria-label="Main navigation">
+          {Object.entries(GROUP_LABELS).map(([key, label]) => {
+            const groupItems = NAV_ITEMS.filter(item => item.group === key);
+            if (groupItems.length === 0) return null;
+            return (
+              <div key={key} className="sidebar-group">
+                {!collapsed && (
+                  <div className="sidebar-group-label">{label}</div>
+                )}
+                <ul className="sidebar-group-items" role="list">
+                  {groupItems.map(item => {
+                    const isActive = item.href === '/'
+                      ? activeRoute === '/'
+                      : activeRoute.startsWith(item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          aria-current={isActive ? 'page' : undefined}
+                          className={`sidebar-link${isActive ? ' sidebar-link--active' : ''}`}
+                          title={collapsed ? item.label : undefined}
+                          onClick={() => { if (collapsed) setCollapsed(false); }}
+                        >
+                          <span className="sidebar-link-icon" aria-hidden="true" />
+                          {!collapsed && (
+                            <span className="sidebar-link-label">{item.label}</span>
+                          )}
+                          {isActive && !collapsed && (
+                            <span className="sidebar-link-active" aria-hidden="true" />
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="sidebar-collapse-btn"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            type="button"
+          >
+            <span aria-hidden="true">{collapsed ? '›' : '‹'}</span>
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }

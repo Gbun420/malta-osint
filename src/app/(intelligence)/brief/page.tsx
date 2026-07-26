@@ -1,57 +1,108 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { MinisterBriefItem } from '@/intelligence/types';
-import { SourceHealthBadge } from '@/components/intelligence/SourceHealthBadge';
-import { VerificationBadge } from '@/components/intelligence/VerificationBadge';
+import type { MinisterBriefItem, ConfidenceLabel } from '@/intelligence/types';
+import { fetchIntelligenceBrief } from '@/services/intelligence/briefService';
 
-interface BriefResponse {
-  brief: MinisterBriefItem[];
-  total: number;
-}
+type BriefView = 'morning' | 'evening' | 'since' | 'critical';
 
-interface ApiEnvelope {
-  apiVersion: string;
-  generatedAt: string;
-  status: 'ok' | 'partial' | 'error';
-  data: BriefResponse;
-  meta: {
-    sources: string[];
-    recordCount: number;
-    warnings: string[];
-    cache: { state: string; ageSeconds: number };
-  };
-}
-
-const VIEW_PARAMS: Record<string, string> = {
+const VIEW_PARAMS: Record<BriefView, string> = {
   morning: '',
   evening: '?since=today',
   since: '?since=yesterday',
   critical: '?minRelevance=80&minConfidence=70',
 };
 
+const VIEW_LABELS: Record<BriefView, string> = {
+  morning: 'Morning Brief',
+  evening: 'Evening Update',
+  since: 'Since Last Briefing',
+  critical: 'Critical Only',
+};
+
+function confidenceBadge(label: ConfidenceLabel) {
+  const map: Record<ConfidenceLabel, { bg: string; text: string; border: string; label: string }> = {
+    confirmed: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: '✓ Confirmed' },
+    high: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30', label: '◐ High' },
+    moderate: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', label: '◑ Moderate' },
+    low: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30', label: '△ Low' },
+    unverified: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: '! Unverified' },
+  };
+  const c = map[label];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${c.bg} ${c.text} border ${c.border}`}>
+      {c.label}
+    </span>
+  );
+}
+
+function severityBadge(severity: number) {
+  const colors: Record<number, string> = {
+    5: 'bg-red-500/20 text-red-400 border-red-500/30',
+    4: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    3: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    2: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+    1: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  };
+  const labels: Record<number, string> = {
+    5: 'Critical', 4: 'High', 3: 'Medium', 2: 'Low', 1: 'Informational',
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border ${colors[severity] || colors[1]}`}>
+      ▲ {labels[severity] || `Level ${severity}`}
+    </span>
+  );
+}
+
+function verificationBadge(state: string) {
+  const map: Record<string, { bg: string; text: string; label: string }> = {
+    'official-confirmation': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: '✓ Official' },
+    'multi-source': { bg: 'bg-blue-500/20', text: 'text-blue-400', label: '◐ Corroborated' },
+    'single-source': { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: '◑ Single Source' },
+    'conflicting': { bg: 'bg-red-500/20', text: 'text-red-400', label: '? Conflicting' },
+    'retracted': { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Retracted' },
+  };
+  const v = map[state] || map['single-source'];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${v.bg} ${v.text}`}>
+      {v.label}
+    </span>
+  );
+}
+
+function followUpBadge(priority: string) {
+  const map: Record<string, { bg: string; text: string; label: string }> = {
+    'immediate': { bg: 'bg-red-500/20', text: 'text-red-400', label: 'IMMEDIATE' },
+    'today': { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'TODAY' },
+    'this-week': { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'THIS WEEK' },
+    'monitor': { bg: 'bg-cyan-500/20', text: 'text-cyan-400', label: 'MONITOR' },
+  };
+  const b = map[priority] || map['monitor'];
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${b.bg} ${b.text}`}>
+      {b.label}
+    </span>
+  );
+}
+
 export default function MinisterBrief() {
   const [items, setItems] = useState<MinisterBriefItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<{ total: number; sources: string[]; warnings: string[]; generatedAt: string } | null>(null);
-  const [view, setView] = useState<'morning' | 'evening' | 'since' | 'critical'>('morning');
+  const [view, setView] = useState<BriefView>('morning');
 
-  const load = useCallback(async (viewKey: string) => {
+  const load = useCallback(async (viewKey: BriefView) => {
     setLoading(true);
     setError(null);
     try {
-      const params = VIEW_PARAMS[viewKey] || '';
-      const res = await fetch(`/api/intelligence/brief${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as ApiEnvelope;
-      const brief = json.data?.brief || [];
-      setItems(brief);
+      const result = await fetchIntelligenceBrief(viewKey);
+      setItems(result.items);
       setMeta({
-        total: json.data?.total || 0,
-        sources: json.meta?.sources || [],
-        warnings: json.meta?.warnings || [],
-        generatedAt: json.generatedAt || '',
+        total: result.total,
+        sources: result.sources,
+        warnings: result.warnings,
+        generatedAt: result.generatedAt,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load briefing');
@@ -60,199 +111,185 @@ export default function MinisterBrief() {
     }
   }, []);
 
-  useEffect(() => {
-    load(view);
-  }, [view, load]);
+  useEffect(() => { load(view); }, [view]);
+  useEffect(() => { load(view); }, []);
 
   const handleRetry = () => load(view);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="glass-panel p-12 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold mx-auto mb-3" />
-          <p className="text-white/50 text-sm">Loading Minister&apos;s Brief...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="glass-panel p-8 text-center">
-          <p className="text-red-400 text-lg font-medium mb-2">Failed to load briefing</p>
-          <p className="text-white/50 text-sm mb-4">{error}</p>
-          {meta?.warnings?.length ? (
-            <p className="text-yellow-400/60 text-xs mb-4">{meta.warnings[0]}</p>
-          ) : null}
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 bg-gold/20 text-gold rounded-lg text-sm hover:bg-gold/30 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="container mx-auto p-6">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Minister&apos;s Brief</h1>
-          <p className="text-sm text-white/50 mt-1">Intelligence briefing tailored for decision-makers</p>
-        </header>
-        <div className="glass-panel p-8 text-center">
-          <BriefIcon />
-          <p className="text-white/50 text-lg font-medium mb-1">No briefing items available</p>
-          <p className="text-white/30 text-sm mb-4">
-            {meta?.warnings?.[0] || 'No events matched the current filters. Try a different view or ingest intelligence events first.'}
-          </p>
-          {meta?.sources && meta.sources.length > 0 && (
-            <p className="text-xs text-white/20">Sources: {meta.sources.join(', ')}</p>
-          )}
-        </div>
-      </div>
-    );
-  }
+  /* Metadata row */
+  const metaRow = meta ? (
+    <div className="brief-meta-row">
+      <span className="brief-meta-item">
+        <span className="brief-meta-label">Generated</span>
+        <span className="brief-meta-value">
+          {meta.generatedAt ? new Date(meta.generatedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Malta' }) : '—'}
+        </span>
+      </span>
+      <span className="brief-meta-item">
+        <span className="brief-meta-label">Items</span>
+        <span className="brief-meta-value">{meta.total} unique</span>
+      </span>
+      <span className="brief-meta-item">
+        <span className="brief-meta-label">Sources</span>
+        <span className="brief-meta-value">{meta.sources.length}</span>
+      </span>
+      <span className="brief-meta-item">
+        <span className="brief-meta-label">Needs review</span>
+        <span className="brief-meta-value">{items.filter(i => i.humanReviewStatus === 'pending' || i.humanReviewStatus === 'changes-requested').length}</span>
+      </span>
+    </div>
+  ) : null;
 
   return (
-    <div className="container mx-auto p-6">
-      <header className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Minister&apos;s Brief</h1>
-            <p className="text-sm text-white/50 mt-1">
-              {items.length} {items.length === 1 ? 'item' : 'items'} · {meta?.generatedAt ? new Date(meta.generatedAt).toLocaleString() : ''}
-            </p>
-          </div>
-          {meta?.sources?.length ? (
-            <div className="text-xs text-white/20">Sources: {meta.sources.join(', ')}</div>
-          ) : null}
-        </div>
-        <div className="flex gap-2 mt-4 flex-wrap">
-          {(['morning', 'evening', 'since', 'critical'] as const).map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-2 rounded-md text-sm transition-colors ${
-                view === v
-                  ? 'bg-gold/30 text-gold border border-gold/30'
-                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-              }`}
-            >
-              {v === 'morning' ? 'Morning Brief' : v === 'evening' ? 'Evening Update' : v === 'since' ? 'Since Last Briefing' : 'Critical Only'}
-            </button>
-          ))}
-        </div>
+    <div className="brief-page">
+      <header className="brief-header">
+        <h1 className="brief-title">Minister&apos;s Brief</h1>
+        <p className="brief-subtitle">Morning intelligence briefing</p>
+        {metaRow}
       </header>
 
-      <div className="space-y-4">
-        {items.map(item => (
-          <div key={item.id} className="glass-panel p-5 hover:border-gold/30 transition-all duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-white">{item.headline}</h2>
-                  {item.severity >= 4 && (
-                    <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded font-bold">CRITICAL</span>
+      {/* Briefing controls */}
+      <nav className="brief-controls" aria-label="Briefing view selector">
+        {(Object.entries(VIEW_LABELS) as [BriefView, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            aria-selected={view === key}
+            role="tab"
+            className={`brief-tab ${view === key ? 'brief-tab--active' : ''}`}
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Loading */}
+      {loading && (
+        <div className="brief-loading">
+          <div className="brief-loading-bar" aria-label="Loading briefing" role="progressbar" />
+          <p className="brief-loading-text">Loading briefing…</p>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="brief-error" role="alert">
+          <p className="brief-error-title">Failed to load briefing</p>
+          <p className="brief-error-text">{error}</p>
+          {meta?.warnings?.length ? (
+            <p className="brief-error-warning">{meta.warnings[0]}</p>
+          ) : null}
+          <button onClick={handleRetry} className="brief-retry-btn" type="button">Retry</button>
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && !error && items.length === 0 && (
+        <div className="brief-empty" role="status">
+          <p className="brief-empty-title">No briefing items available</p>
+          <p className="brief-empty-text">
+            {meta?.warnings?.[0] || 'No events matched the current filters.'}
+          </p>
+          {meta?.sources && meta.sources.length > 0 && (
+            <p className="brief-empty-sources">Sources: {meta.sources.join(', ')}</p>
+          )}
+        </div>
+      )}
+
+      {/* Briefing items */}
+      {!loading && !error && items.length > 0 && (
+        <div className="brief-items">
+          {items.map(item => (
+            <article key={item.id} className="brief-card" aria-labelledby={`brief-title-${item.id}`}>
+              {/* Header row */}
+              <div className="brief-card-header">
+                <div className="brief-card-header-left">
+                  <h2 id={`brief-title-${item.id}`} className="brief-card-title">{item.headline}</h2>
+                  <div className="brief-card-badges">
+                    {severityBadge(item.severity)}
+                    {confidenceBadge(item.confidenceLabel)}
+                    {verificationBadge(item.verificationState)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Executive summary */}
+              <p className="brief-card-summary">{item.executiveSummary}</p>
+
+              {/* Why it matters */}
+              {item.whyItMattersToMalta.length > 0 && (
+                <div className="brief-card-section">
+                  <h3 className="brief-card-section-title">Impact Assessment</h3>
+                  <ul className="brief-card-list">
+                    {item.whyItMattersToMalta.map((point, i) => (
+                      <li key={i} className="brief-card-list-item">{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Follow-up actions */}
+              {item.possibleFollowUp.length > 0 && (
+                <div className="brief-card-section">
+                  <h3 className="brief-card-section-title">Recommended Actions</h3>
+                  <ul className="brief-card-list">
+                    {item.possibleFollowUp.map((f, i) => (
+                      <li key={i} className="brief-card-followup">
+                        <span className="brief-card-followup-action">{f.action}</span>
+                        <span className="brief-card-followup-meta">
+                          {followUpBadge(f.priority)}
+                          {f.rationale && (
+                            <span className="brief-card-followup-rationale">{f.rationale}</span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Metadata footer */}
+              <div className="brief-card-footer">
+                <div className="brief-card-meta">
+                  {item.eventTime && (
+                    <span className="brief-meta-item">
+                      <span className="brief-meta-label">Occurred</span>
+                      <span className="brief-meta-value">{new Date(item.eventTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Malta' })}</span>
+                    </span>
+                  )}
+                  {item.countries && item.countries.length > 0 && (
+                    <span className="brief-meta-item">
+                      <span className="brief-meta-label">Countries</span>
+                      <span className="brief-meta-value">{item.countries.map(c => c.name || c.alpha2).join(', ')}</span>
+                    </span>
+                  )}
+                  {item.categories && item.categories.length > 0 && (
+                    <span className="brief-meta-item">
+                      <span className="brief-meta-label">Categories</span>
+                      <span className="brief-meta-value">{item.categories.map(c => c.replace(/-/g, ' ')).join(', ')}</span>
+                    </span>
                   )}
                 </div>
-                <p className="text-sm text-white/60 mt-1">{item.executiveSummary}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
-                <div className="flex items-center gap-1">
-                  <span className="hud-label text-[10px]">Severity</span>
-                  <span className="text-sm font-bold text-white">{item.severity}/5</span>
+                <div className="brief-card-status">
+                  <span className={`brief-review-badge brief-review-badge--${item.humanReviewStatus}`}>
+                    {item.humanReviewStatus.replace(/-/g, ' ')}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="hud-label text-[10px]">Confidence</span>
-                  <span className={`text-xs font-medium ${
-                    item.confidenceLabel === 'high' || item.confidenceLabel === 'confirmed'
-                      ? 'text-green-400' : item.confidenceLabel === 'moderate'
-                        ? 'text-yellow-400' : 'text-red-400'
-                  }`}>{item.confidenceLabel}</span>
-                </div>
-                <VerificationBadge state={item.verificationState} />
               </div>
-            </div>
+            </article>
+          ))}
+        </div>
+      )}
 
-            {item.whyItMattersToMalta.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <span className="text-xs font-medium text-green-400">Why it matters to Malta</span>
-                <ul className="list-disc ml-5 mt-2 space-y-1">
-                  {item.whyItMattersToMalta.map((point, i) => (
-                    <li key={i} className="text-sm text-white/60">{point}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/40">
-              {item.eventTime && (
-                <span>Occurred: {new Date(item.eventTime).toLocaleString()}</span>
-              )}
-              {item.countries?.length > 0 && (
-                <span>Countries: {item.countries.map(c => c.name || c.alpha2).join(', ')}</span>
-              )}
-              {item.categories?.length > 0 && (
-                <span>Categories: {item.categories.join(', ')}</span>
-              )}
-            </div>
-
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {item.categories?.map(cat => (
-                <span key={cat} className="text-xs px-2 py-0.5 bg-gold/10 text-gold/80 rounded">
-                  {cat.replace(/-/g, ' ')}
-                </span>
-              ))}
-            </div>
-
-            {item.possibleFollowUp.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <span className="text-xs font-medium text-yellow-400">Possible Follow-Up</span>
-                <ul className="list-disc ml-5 mt-2 space-y-1">
-                  {item.possibleFollowUp.map((f, i) => (
-                    <li key={i} className="text-sm text-yellow-400/80">
-                      {f.action}
-                      {f.priority && (
-                        <span className="ml-2 text-[10px] uppercase text-white/30">[{f.priority}]</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs text-white/30">
-                <span>Observed: {new Date(item.firstObservedAt).toLocaleString()}</span>
-                <span>Updated: {new Date(item.lastUpdatedAt).toLocaleString()}</span>
-              </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-medium uppercase ${
-                item.humanReviewStatus === 'approved' ? 'bg-green-500/20 text-green-400'
-                  : item.humanReviewStatus === 'rejected' ? 'bg-red-500/20 text-red-400'
-                    : item.humanReviewStatus === 'changes-requested' ? 'bg-yellow-500/20 text-yellow-400'
-                      : 'bg-white/10 text-white/40'
-              }`}>{item.humanReviewStatus.replace(/-/g, ' ')}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      {/* Warnings */}
       {meta?.warnings?.length ? (
-        <div className="mt-4 text-xs text-yellow-400/60 text-center">{meta.warnings[0]}</div>
+        <div className="brief-warnings" role="status">
+          {meta.warnings.map((w, i) => (
+            <p key={i} className="brief-warning-text">{w}</p>
+          ))}
+        </div>
       ) : null}
     </div>
-  );
-}
-
-function BriefIcon() {
-  return (
-    <svg className="w-12 h-12 mx-auto mb-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
   );
 }

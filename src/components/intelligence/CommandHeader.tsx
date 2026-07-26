@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-
 interface CommandHeaderProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -9,28 +7,34 @@ interface CommandHeaderProps {
 
 export function CommandHeader({ sidebarOpen, onToggleSidebar }: CommandHeaderProps) {
   return (
-    <header className="flex items-center justify-between border-b border-gold/20 bg-void/80 p-4">
-      <button 
-        className="hidden md:hidden"
-        onClick={onToggleSidebar}
-        aria-label="Toggle sidebar"
-      >
-        <span className="hamburger hamburger-open"></span>
-      </button>
-      
-      <div className="flex-1">
-        <span className="text-white/60">
-          Malta OSINT Intelligence Platform
-        </span>
+    <header className="app-header" role="banner">
+      <div className="app-header-inner">
+        <div className="app-header-left">
+          <button
+            onClick={onToggleSidebar}
+            className="app-header-menu-btn"
+            aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            aria-expanded={sidebarOpen}
+            type="button"
+          >
+            <span className="app-header-menu-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </span>
+          </button>
+          <h1 className="app-header-title">Malta OSINT</h1>
+          <span className="app-header-subtitle">Global Intelligence Platform</span>
+        </div>
+        <div className="app-header-right">
+          <span className="app-header-status">
+            <span className="app-header-status-dot" aria-hidden="true" />
+            <span className="app-header-status-text">Operational</span>
+          </span>
+        </div>
       </div>
-      
-      <button 
-        className="md:hidden"
-        onClick={onToggleSidebar}
-        aria-label="Toggle sidebar"
-      >
-        <span className="hamburger hamburger-open"></span>
-      </button>
     </header>
   );
 }

@@ -1,41 +1,56 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Sidebar } from './Sidebar';
 import { CommandHeader } from './CommandHeader';
 import { StatusBadge } from './StatusBadge';
 
 export default function ApplicationShell({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('/');
 
-  const handleToggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const handleToggleSidebar = () => setSidebarOpen(o => !o);
   const handleTabChange = (tab: string) => setActiveTab(tab);
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-void text-white">
-      <Sidebar
-        activeRoute={activeTab}
-        isOpen={sidebarOpen}
-        onToggle={handleToggleSidebar}
-      />
-      
-      <div className="flex-1 flex-col overflow-auto p-4">
-        <CommandHeader 
+    <div className="app-shell">
+      <div className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <Sidebar
+          activeRoute={activeTab}
+          onToggle={handleToggleSidebar}
+        />
+      </div>
+
+      {sidebarOpen && (
+        <div
+          className="sidebar-mobile-backdrop"
+          onClick={handleToggleSidebar}
+          role="presentation"
+        />
+      )}
+
+      <div className="app-main">
+        <CommandHeader
           sidebarOpen={sidebarOpen}
           onToggleSidebar={handleToggleSidebar}
         />
-        
-        <div className="flex-1">
+
+        <main className="app-content" id="main-content">
           {children}
-        </div>
-        
-        <footer className="border-t border-gold/20 p-4 text-white/50">
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Malta OSINT Intelligence Platform</span>
-            <StatusBadge status="green" label="Operational" />
-          </div>
+        </main>
+
+        <footer className="app-footer">
+          <span>Malta OSINT Intelligence Platform</span>
+          <StatusBadge status="green" label="Operational" />
         </footer>
       </div>
     </div>
