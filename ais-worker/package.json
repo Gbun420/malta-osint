@@ -1,0 +1,23 @@
+{
+  "name": "ais-ingestion-worker",
+  "version": "1.0.0",
+  "description": "Persistent AIS WebSocket ingestion worker for Malta OSINT",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-vm-modules dist/index.js",
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "health": "curl -s http://localhost:7700/health | head -20"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "@upstash/redis": "^1.38.0",
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "tsx": "^4.19.0",
+    "@types/ws": "^8.5.10"
+  }
+}
