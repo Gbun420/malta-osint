@@ -23,34 +23,37 @@ export async function GET() {
     const allArticles: any[] = [];
     const seenUrls = new Set<string>();
 
-    for (const query of queries) {
-      try {
+    const results = await Promise.allSettled(
+      queries.map(async (query) => {
         const params = new URLSearchParams({
           query: query.q,
           mode: 'artlist',
           format: 'json',
           timespan: '72h',
-          maxrecords: '15',
+          maxrecords: '10',
           sort: 'datedesc',
         });
 
         const res = await fetch(`${GDELT_DOC_URL}?${params}`, {
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(5000),
         });
 
-        if (!res.ok) continue;
-
+        if (!res.ok) return null;
         const data = await res.json();
-        const articles: any[] = data?.articles || data?.results || [];
+        return { articles: data?.articles || data?.results || [], label: query.label };
+      })
+    );
 
-        for (const article of articles) {
+    for (const result of results) {
+      if (result.status !== 'fulfilled' || !result.value) continue;
+      const { articles, label } = result.value;
+      for (const article of articles) {
           const url = article.url || article.link || '';
           if (!url || seenUrls.has(url)) continue;
           seenUrls.add(url);
 
           const title = article.title || '';
           const text = (title + ' ' + (article.selection || article.summary || '')).toLowerCase();
-
           const matchedCountries = MEDITERRANEAN_COUNTRIES.filter(c => text.includes(c));
           const isMaltaRelevant = text.includes('malta') || text.includes('maltese');
 
@@ -62,14 +65,11 @@ export async function GET() {
             source: article.sourcecountry || article.domain || 'GDELT',
             publishedAt: article.seendate || article.date || new Date().toISOString(),
             image: article.image || null,
-            category: query.label,
+            category: label,
             matchedCountries,
             isMaltaRelevant,
             maltaRelevance: isMaltaRelevant ? 25 : matchedCountries.length > 0 ? 10 : 0,
           });
-        }
-      } catch {
-        continue;
       }
     }
 

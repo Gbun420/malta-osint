@@ -386,7 +386,7 @@ function MaltaMap({
 
       {mapReady && (
         <div className="absolute top-4 left-4 z-10 glass-panel px-2.5 py-2 pointer-events-none">
-          <span className="text-[9px] font-mono text-white/60">THIRD EYE</span>
+          <span className="text-[9px] font-mono text-white/60">MALTA OSINT</span>
         </div>
       )}
 

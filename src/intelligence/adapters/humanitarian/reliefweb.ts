@@ -12,24 +12,7 @@ export async function fetchReliefWeb(): Promise<AdapterResult<IntelligenceEvent>
   const errors: { code: string; message: string; retryable: boolean }[] = [];
   const warnings: string[] = [];
 
-  const appName = process.env.RELIEFWEB_APP_NAME;
-  if (!appName) {
-    const elapsed = Date.now() - start;
-    return {
-      sourceId,
-      attemptedAt,
-      completedAt: new Date().toISOString(),
-      status: 'unconfigured',
-      records: [],
-      rawCount: 0,
-      acceptedCount: 0,
-      rejectedCount: 0,
-      deduplicatedCount: 0,
-      latencyMs: elapsed,
-      errors: [{ code: 'UNCONFIGURED', message: 'RELIEFWEB_APP_NAME not set', retryable: false }],
-      warnings: ['Set RELIEFWEB_APP_NAME in environment'],
-    };
-  }
+  const appName = process.env.RELIEFWEB_APP_NAME || 'malta-osint';
 
   try {
     const url = `https://api.reliefweb.int/v2/reports?appname=${appName}&limit=50&sort[]=date:desc&fields[]=title&fields[]=body&fields[]=date&fields[]=url&fields[]=source`;
