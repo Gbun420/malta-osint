@@ -1,0 +1,88 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e2]:
+    - complementary [ref=f6e4]:
+      - generic [ref=f6e5]:
+        - generic [ref=f6e7]:
+          - generic [ref=f6e8]: M
+          - generic [ref=f6e9]:
+            - generic [ref=f6e10]: MALTA OSINT
+            - generic [ref=f6e11]: INTELLIGENCE
+        - navigation "Main navigation" [ref=f6e12]:
+          - generic [ref=f6e13]:
+            - generic [ref=f6e14]: Platform
+            - list [ref=f6e15]:
+              - listitem [ref=f6e16]:
+                - link "Command Centre" [ref=f6e17] [cursor=pointer]:
+                  - /url: /
+          - generic [ref=f6e21]:
+            - generic [ref=f6e22]: Intelligence
+            - list [ref=f6e23]:
+              - listitem [ref=f6e24]:
+                - link "Minister's Brief" [ref=f6e25] [cursor=pointer]:
+                  - /url: /brief
+              - listitem [ref=f6e28]:
+                - link "Global Events" [ref=f6e29] [cursor=pointer]:
+                  - /url: /events
+              - listitem [ref=f6e32]:
+                - link "Malta Impact" [ref=f6e33] [cursor=pointer]:
+                  - /url: /malta-impact
+              - listitem [ref=f6e36]:
+                - link "Countries" [ref=f6e37] [cursor=pointer]:
+                  - /url: /countries
+              - listitem [ref=f6e40]:
+                - link "Sanctions" [ref=f6e41] [cursor=pointer]:
+                  - /url: /sanctions
+          - generic [ref=f6e44]:
+            - generic [ref=f6e45]: Domains
+            - list [ref=f6e46]:
+              - listitem [ref=f6e47]:
+                - link "Maritime" [ref=f6e48] [cursor=pointer]:
+                  - /url: /maritime
+              - listitem [ref=f6e51]:
+                - link "Aviation" [ref=f6e52] [cursor=pointer]:
+                  - /url: /aviation
+          - generic [ref=f6e55]:
+            - generic [ref=f6e56]: Workflow
+            - list [ref=f6e57]:
+              - listitem [ref=f6e58]:
+                - link "Review Queue" [ref=f6e59] [cursor=pointer]:
+                  - /url: /review
+              - listitem [ref=f6e62]:
+                - link "Source Health" [ref=f6e63] [cursor=pointer]:
+                  - /url: /sources
+              - listitem [ref=f6e66]:
+                - link "Audio Intel" [ref=f6e67] [cursor=pointer]:
+                  - /url: /audio
+          - generic [ref=f6e70]:
+            - generic [ref=f6e71]: System
+            - list [ref=f6e72]:
+              - listitem [ref=f6e73]:
+                - link "API Docs" [ref=f6e74] [cursor=pointer]:
+                  - /url: /docs
+              - listitem [ref=f6e77]:
+                - link "Settings" [ref=f6e78] [cursor=pointer]:
+                  - /url: /settings
+        - button "Collapse sidebar" [ref=f6e82] [cursor=pointer]:
+          - generic [ref=f6e83]: ‹
+    - generic [ref=f6e84]:
+      - banner [ref=f6e85]:
+        - generic [ref=f6e86]:
+          - generic [ref=f6e87]:
+            - button "Open sidebar" [ref=f6e88] [cursor=pointer]
+            - heading "Malta OSINT" [level=1] [ref=f6e91]
+            - generic [ref=f6e92]: Global Intelligence Platform
+          - generic [ref=f6e93]: Operational
+      - main [ref=f6e97]:
+        - generic [ref=f6e98]:
+          - generic [ref=f6e99]:
+            - generic [ref=f6e100]:
+              - heading "Maritime Domain Awareness" [level=1] [ref=f6e101]
+              - paragraph [ref=f6e102]: Global vessel positions via AIS · terrestrial source
+            - button "Malta Zone" [ref=f6e104]
+          - generic [ref=f6e130]:
+            - generic [ref=f6e131]: "Scope: Malta zone (35.6-36.2N, 14.0-14.8E)"
+            - generic [ref=f6e132]: "API: /api/ais/vessels"
+      - contentinfo [ref=f6e133]:
+        - generic [ref=f6e134]: Malta OSINT Intelligence Platform
+        - generic [ref=f6e135]: Operational
+  - alert [ref=f6e137]

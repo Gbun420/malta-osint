@@ -1,0 +1,99 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - complementary [ref=f2e4]:
+      - generic [ref=f2e5]:
+        - generic [ref=f2e7]:
+          - generic [ref=f2e8]: M
+          - generic [ref=f2e9]:
+            - generic [ref=f2e10]: MALTA OSINT
+            - generic [ref=f2e11]: INTELLIGENCE
+        - navigation "Main navigation" [ref=f2e12]:
+          - generic [ref=f2e13]:
+            - generic [ref=f2e14]: Platform
+            - list [ref=f2e15]:
+              - listitem [ref=f2e16]:
+                - link "Command Centre" [ref=f2e17] [cursor=pointer]:
+                  - /url: /
+          - generic [ref=f2e21]:
+            - generic [ref=f2e22]: Intelligence
+            - list [ref=f2e23]:
+              - listitem [ref=f2e24]:
+                - link "Minister's Brief" [ref=f2e25] [cursor=pointer]:
+                  - /url: /brief
+              - listitem [ref=f2e28]:
+                - link "Global Events" [ref=f2e29] [cursor=pointer]:
+                  - /url: /events
+              - listitem [ref=f2e32]:
+                - link "Malta Impact" [ref=f2e33] [cursor=pointer]:
+                  - /url: /malta-impact
+              - listitem [ref=f2e36]:
+                - link "Countries" [ref=f2e37] [cursor=pointer]:
+                  - /url: /countries
+              - listitem [ref=f2e40]:
+                - link "Sanctions" [ref=f2e41] [cursor=pointer]:
+                  - /url: /sanctions
+          - generic [ref=f2e44]:
+            - generic [ref=f2e45]: Domains
+            - list [ref=f2e46]:
+              - listitem [ref=f2e47]:
+                - link "Maritime" [ref=f2e48] [cursor=pointer]:
+                  - /url: /maritime
+              - listitem [ref=f2e51]:
+                - link "Aviation" [ref=f2e52] [cursor=pointer]:
+                  - /url: /aviation
+          - generic [ref=f2e55]:
+            - generic [ref=f2e56]: Workflow
+            - list [ref=f2e57]:
+              - listitem [ref=f2e58]:
+                - link "Review Queue" [ref=f2e59] [cursor=pointer]:
+                  - /url: /review
+              - listitem [ref=f2e62]:
+                - link "Source Health" [ref=f2e63] [cursor=pointer]:
+                  - /url: /sources
+              - listitem [ref=f2e66]:
+                - link "Audio Intel" [ref=f2e67] [cursor=pointer]:
+                  - /url: /audio
+          - generic [ref=f2e70]:
+            - generic [ref=f2e71]: System
+            - list [ref=f2e72]:
+              - listitem [ref=f2e73]:
+                - link "API Docs" [ref=f2e74] [cursor=pointer]:
+                  - /url: /docs
+              - listitem [ref=f2e77]:
+                - link "Settings" [ref=f2e78] [cursor=pointer]:
+                  - /url: /settings
+        - button "Collapse sidebar" [ref=f2e82] [cursor=pointer]:
+          - generic [ref=f2e83]: ‹
+    - generic [ref=f2e84]:
+      - banner [ref=f2e85]:
+        - generic [ref=f2e86]:
+          - generic [ref=f2e87]:
+            - button "Open sidebar" [ref=f2e88] [cursor=pointer]
+            - heading "Malta OSINT" [level=1] [ref=f2e91]
+            - generic [ref=f2e92]: Global Intelligence Platform
+          - generic [ref=f2e93]: Operational
+      - main [ref=f2e97]:
+        - generic [ref=f2e98]:
+          - banner [ref=f2e99]:
+            - generic [ref=f2e100]:
+              - generic [ref=f2e101]:
+                - button "Open sidebar" [ref=f2e102] [cursor=pointer]
+                - heading "Malta OSINT" [level=1] [ref=f2e105]
+                - generic [ref=f2e106]: Global Intelligence Platform
+              - generic [ref=f2e107]: Operational
+          - generic [ref=f2e111]:
+            - generic [ref=f2e112]:
+              - heading "Global Events" [level=1] [ref=f2e113]
+              - paragraph [ref=f2e114]: 0 of 0 events •0 critical •0 high confidence •0 verified
+            - generic [ref=f2e115]:
+              - button "🔍 Filters 2" [ref=f2e116]
+              - generic [ref=f2e117]:
+                - button "📊 Export CSV" [ref=f2e118]
+                - button "📄 Export JSON" [ref=f2e119]
+          - generic [ref=f2e121]:
+            - heading "Active Events (0)" [level=2] [ref=f2e122]
+            - generic [ref=f2e123]: Filtered from 0 total
+      - contentinfo [ref=f2e149]:
+        - generic [ref=f2e150]: Malta OSINT Intelligence Platform
+        - generic [ref=f2e151]: Operational
+  - alert [ref=f2e153]

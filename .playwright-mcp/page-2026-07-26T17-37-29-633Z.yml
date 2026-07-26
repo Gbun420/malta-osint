@@ -1,0 +1,92 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e2]:
+    - complementary [ref=f8e4]:
+      - generic [ref=f8e5]:
+        - generic [ref=f8e7]:
+          - generic [ref=f8e8]: M
+          - generic [ref=f8e9]:
+            - generic [ref=f8e10]: MALTA OSINT
+            - generic [ref=f8e11]: INTELLIGENCE
+        - navigation "Main navigation" [ref=f8e12]:
+          - generic [ref=f8e13]:
+            - generic [ref=f8e14]: Platform
+            - list [ref=f8e15]:
+              - listitem [ref=f8e16]:
+                - link "Command Centre" [ref=f8e17] [cursor=pointer]:
+                  - /url: /
+          - generic [ref=f8e21]:
+            - generic [ref=f8e22]: Intelligence
+            - list [ref=f8e23]:
+              - listitem [ref=f8e24]:
+                - link "Minister's Brief" [ref=f8e25] [cursor=pointer]:
+                  - /url: /brief
+              - listitem [ref=f8e28]:
+                - link "Global Events" [ref=f8e29] [cursor=pointer]:
+                  - /url: /events
+              - listitem [ref=f8e32]:
+                - link "Malta Impact" [ref=f8e33] [cursor=pointer]:
+                  - /url: /malta-impact
+              - listitem [ref=f8e36]:
+                - link "Countries" [ref=f8e37] [cursor=pointer]:
+                  - /url: /countries
+              - listitem [ref=f8e40]:
+                - link "Sanctions" [ref=f8e41] [cursor=pointer]:
+                  - /url: /sanctions
+          - generic [ref=f8e44]:
+            - generic [ref=f8e45]: Domains
+            - list [ref=f8e46]:
+              - listitem [ref=f8e47]:
+                - link "Maritime" [ref=f8e48] [cursor=pointer]:
+                  - /url: /maritime
+              - listitem [ref=f8e51]:
+                - link "Aviation" [ref=f8e52] [cursor=pointer]:
+                  - /url: /aviation
+          - generic [ref=f8e55]:
+            - generic [ref=f8e56]: Workflow
+            - list [ref=f8e57]:
+              - listitem [ref=f8e58]:
+                - link "Review Queue" [ref=f8e59] [cursor=pointer]:
+                  - /url: /review
+              - listitem [ref=f8e62]:
+                - link "Source Health" [ref=f8e63] [cursor=pointer]:
+                  - /url: /sources
+              - listitem [ref=f8e66]:
+                - link "Audio Intel" [ref=f8e67] [cursor=pointer]:
+                  - /url: /audio
+          - generic [ref=f8e70]:
+            - generic [ref=f8e71]: System
+            - list [ref=f8e72]:
+              - listitem [ref=f8e73]:
+                - link "API Docs" [ref=f8e74] [cursor=pointer]:
+                  - /url: /docs
+              - listitem [ref=f8e77]:
+                - link "Settings" [ref=f8e78] [cursor=pointer]:
+                  - /url: /settings
+        - button "Collapse sidebar" [ref=f8e82] [cursor=pointer]:
+          - generic [ref=f8e83]: ‹
+    - generic [ref=f8e84]:
+      - banner [ref=f8e85]:
+        - generic [ref=f8e86]:
+          - generic [ref=f8e87]:
+            - button "Open sidebar" [ref=f8e88] [cursor=pointer]
+            - heading "Malta OSINT" [level=1] [ref=f8e91]
+            - generic [ref=f8e92]: Global Intelligence Platform
+          - generic [ref=f8e93]: Operational
+      - main [ref=f8e97]:
+        - generic [ref=f8e98]:
+          - generic [ref=f8e99]:
+            - heading "Review Queue" [level=1] [ref=f8e100]
+            - link "Back to Command Centre" [ref=f8e101] [cursor=pointer]:
+              - /url: /
+          - generic [ref=f8e102]:
+            - generic [ref=f8e103]: "Filter:"
+            - combobox [ref=f8e104]:
+              - option "All" [selected]
+              - option "Pending"
+              - option "Approved"
+              - option "Rejected"
+          - heading "Review Items" [level=2] [ref=f8e106]
+      - contentinfo [ref=f8e107]:
+        - generic [ref=f8e108]: Malta OSINT Intelligence Platform
+        - generic [ref=f8e109]: Operational
+  - alert [ref=f8e111]
