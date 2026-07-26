@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
-import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Menu, X, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
@@ -40,6 +41,7 @@ export default function MaltaDashboard() {
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showSmartSystem, setShowSmartSystem] = useState(false);
+  const [showNav, setShowNav] = useState(false);
 
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
     enabled: activeLayers.vessels,
@@ -158,7 +160,14 @@ export default function MaltaDashboard() {
 
       <header className="absolute top-0 left-0 right-0 z-[300] gotham-command-bar">
         <div className="gotham-command-bar__section">
-          <span className="gotham-command-bar__title">THIRD EYE</span>
+          <button
+            onClick={() => setShowNav(s => !s)}
+            className="gotham-command-bar__action mr-2"
+            title="Navigation menu"
+          >
+            {showNav ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
+          </button>
+          <span className="gotham-command-bar__title">MALTA OSINT</span>
           <span className="text-[9px] text-[var(--text-muted)] font-mono tracking-[0.15em]">
             GLOBAL INTELLIGENCE
           </span>
@@ -197,6 +206,39 @@ export default function MaltaDashboard() {
           </button>
         </div>
       </header>
+
+      <AnimatePresence>
+        {showNav && (
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-[44px] left-2 z-[300] glass-panel p-2 w-48"
+          >
+            {[
+              { href: '/dashboard', label: 'Dashboard', icon: Map },
+              { href: '/analytics', label: 'Analytics', icon: Activity },
+              { href: '/events', label: 'Events', icon: Radio },
+              { href: '/brief', label: 'Briefing', icon: FileText },
+              { href: '/sources', label: 'Sources', icon: Globe },
+              { href: '/audio', label: 'Audio Intel', icon: Headphones },
+              { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
+              { href: '/review', label: 'Review Queue', icon: Briefcase },
+            ].map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setShowNav(false)}
+                className="flex items-center gap-2 px-3 py-2 text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded transition-colors"
+              >
+                <item.icon className="w-3 h-3 text-[var(--gold-primary)]" />
+                {item.label}
+              </Link>
+            ))}
+          </motion.nav>
+        )}
+      </AnimatePresence>
 
       <MaltaLayerPanel activeLayers={activeLayers} onToggle={toggleLayer} />
 
