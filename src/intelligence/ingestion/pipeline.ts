@@ -1,5 +1,6 @@
+import { createHash } from 'crypto';
 import type { AdapterResult } from '@/intelligence/schemas/registry';
-import type { IntelligenceEvent } from '@/intelligence/types';
+import type { IntelligenceEvent, EvidenceRecord } from '@/intelligence/types';
 import { globalRepository } from '@/intelligence/repository/memory';
 import { createSourceHealthRecord } from '@/intelligence/source-health';
 import { calculateConfidence, verificationState } from '@/intelligence/confidence';
@@ -50,18 +51,43 @@ export async function runIngestion(sourceId?: string): Promise<{
       const result = await adapter.factory();
 
       if (result.records.length > 0) {
-        const enriched = result.records.map(event => {
+        const hasConflict = result.errors.some(e => e.code === 'CONFLICTING');
+
+        const evidence: EvidenceRecord[] = result.records.map(event => ({
+          id: `ev-${event.id}`,
+          sourceId: adapter.id,
+          publisher: adapter.name,
+          sourceType: 'official-primary' as const,
+          url: (event as any).sourceUrl || '',
+          title: event.title,
+          publicationTime: event.eventTime,
+          retrievalTime: new Date().toISOString(),
+          language: null,
+          contentHash: createHash('sha256').update(event.title + (event.summary || '')).digest('hex').slice(0, 16),
+          excerpt: (event.summary || '').slice(0, 200),
+          schemaVersion: '1',
+          parserVersion: '1',
+        }));
+
+        await globalRepository.upsertEvidence(evidence);
+
+        const enriched = result.records.map((event, i) => {
           const classifications = classify(undefined, event.title + ' ' + (event.summary || ''));
           const cats = [...new Set([...event.categories, ...classifications.map(c => c.category)])];
 
-          const hasConflict = result.errors.some(e => e.code === 'CONFLICTING');
+          const eventEvidence = evidence[i] ? [evidence[i]] : [];
+
+          const freshness = event.eventTime
+            ? Math.max(0, Date.now() - new Date(event.eventTime).getTime())
+            : 0;
+
           const confidence = calculateConfidence({
-            evidence: [],
+            evidence: eventEvidence,
             hasConflictingSources: hasConflict,
             hasRetraction: false,
             eventTimeKnown: !!event.eventTime,
             geolocationInferred: event.locations.length === 0,
-            sourceFreshnessMs: 0,
+            sourceFreshnessMs: freshness,
           });
 
           const relevance = calculateMaltaRelevance({
@@ -82,34 +108,12 @@ export async function runIngestion(sourceId?: string): Promise<{
             categories: cats as any,
             confidenceScore: confidence.score,
             maltaRelevanceScore: relevance,
-            verificationState: verificationState(result.records.length, 1, hasConflict, false),
+            verificationState: verificationState(eventEvidence.length, event.officialSourceCount || 1, hasConflict, false),
+            evidenceIds: [evidence[i]?.id].filter(Boolean),
           };
         });
 
-        const evidence = enriched.map(e => ({
-          id: `ev-${e.id}`,
-          sourceId: adapter.id,
-          publisher: adapter.name,
-          sourceType: 'official-primary' as const,
-          url: '',
-          title: e.title,
-          publicationTime: e.eventTime,
-          retrievalTime: new Date().toISOString(),
-          language: null,
-          contentHash: '',
-          excerpt: e.summary.slice(0, 200),
-          schemaVersion: '1',
-          parserVersion: '1',
-        }));
-
-        await globalRepository.upsertEvidence(evidence);
-
-        const withEvidence = enriched.map((e, i) => ({
-          ...e,
-          evidenceIds: [evidence[i]?.id].filter(Boolean),
-        }));
-
-        await globalRepository.upsertEvents(withEvidence);
+        await globalRepository.upsertEvents(enriched);
       }
 
       const healthRecord = createSourceHealthRecord({

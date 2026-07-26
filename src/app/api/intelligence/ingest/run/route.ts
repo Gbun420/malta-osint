@@ -1,8 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { runIngestion } from '@/intelligence/ingestion/pipeline';
 import { createEnvelope } from '@/intelligence/schemas/api-envelope';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const validKey = process.env.SDK_INGEST_KEY || 'thirdeye-dev-key';
+  const authKey = request.headers.get('x-sdk-key') || request.headers.get('authorization')?.replace('Bearer ', '');
+
+  if (!authKey || authKey !== validKey) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const result = await runIngestion();
 
