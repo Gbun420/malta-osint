@@ -1,0 +1,16 @@
+export const AIS_CONFIG = {
+    wsUrl: (process.env.AIS_API_KEY ? 'wss://stream.aisstream.io/v0/stream' : ''),
+    apiKey: process.env.AIS_API_KEY || '',
+    mockMode: process.env.AIS_MOCK_MODE === 'true',
+    mockPort: parseInt(process.env.AIS_MOCK_PORT || '7701', 10),
+    maltaBbox: { minLat: 35.6, maxLat: 36.2, minLon: 14.0, maxLon: 14.8 },
+    worldBbox: { minLat: -90, maxLat: 90, minLon: -180, maxLon: 180 },
+    reconnectDelayMs: parseInt(process.env.AIS_RECONNECT_DELAY || '5000', 10),
+    maxReconnectDelayMs: parseInt(process.env.AIS_MAX_RECONNECT_DELAY || '60000', 10),
+    batchSize: parseInt(process.env.AIS_BATCH_SIZE || '500', 10),
+    batchIntervalMs: parseInt(process.env.AIS_BATCH_INTERVAL || '1000', 10),
+    healthPort: parseInt(process.env.AIS_HEALTH_PORT || '7700', 10),
+    supabaseUrl: process.env.SUPABASE_URL || '',
+    supabaseKey: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '',
+    supabaseTable: process.env.SUPABASE_VESSELS_TABLE || 'ais_vessels',
+};
