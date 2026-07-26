@@ -45,7 +45,7 @@ x-casaos:
   category: Network
   description:
     en_us: >-
-      Malta OSINT is a production-grade open-source OSINT situational-awareness
+      Third Eye is a production-grade open-source OSINT situational-awareness
       dashboard. It aggregates real-time global intelligence across aviation,
       maritime, CCTV networks, seismic activity, wildfires, news feeds,
       weather, space weather, cyber threats (CVEs) and conflict zones into a
@@ -54,7 +54,7 @@ x-casaos:
   tagline:
     en_us: Real-time global OSINT intelligence dashboard
   title:
-    en_us: Malta OSINT
+    en_us: Third Eye
   icon: https://raw.githubusercontent.com/Aiacos/third-eye/master/public/casaos-icon.png
   thumbnail: https://raw.githubusercontent.com/Aiacos/third-eye/master/public/og-image.png
   screenshot_link:

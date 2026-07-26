@@ -1,10 +1,10 @@
-# Self-Hosting Malta OSINT with Docker
+# Self-Hosting Third Eye with Docker
 
-Malta OSINT ships as a self-contained Next.js standalone build. This guide covers
+Third Eye ships as a self-contained Next.js standalone build. This guide covers
 running it with Docker / Docker Compose, deploying it as a [CasaOS](https://casaos.io)
 app, and configuring the optional API keys.
 
-> **TL;DR:** Malta OSINT runs fully **without any API keys**. All core feeds
+> **TL;DR:** Third Eye runs fully **without any API keys**. All core feeds
 > (aviation, satellites, fires, earthquakes, weather, news, CVEs) use public
 > keyless sources. Keys only matter for the optional RECON scanner backend and
 > for raising rate limits on a few feeds.
@@ -32,7 +32,7 @@ What the compose file does:
   if it's available locally or pullable, otherwise builds from the local
   `Dockerfile`. Run `docker compose pull` to fetch the latest published image.
 - **`env_file: .env` (`required: false`)** — if a `.env` file exists its
-  values are injected into the container; if it's missing, Malta OSINT still starts
+  values are injected into the container; if it's missing, Third Eye still starts
   with the keyless feeds.
 - **`ports: ${THIRDEYE_PORT:-3000}:3000`** — the web UI. The container always
   listens on 3000; the published **host** port is `THIRDEYE_PORT` (default
@@ -52,7 +52,7 @@ docker compose down             # stop & remove
 ### Pull the prebuilt image from GHCR
 
 A prebuilt multi-arch-friendly image is published to the GitHub Container
-Registry, so you can run Malta OSINT without building anything:
+Registry, so you can run Third Eye without building anything:
 
 ```bash
 docker pull ghcr.io/aiacos/third-eye:latest      # or a pinned tag, e.g. :0.1.0
@@ -96,7 +96,7 @@ reads.
 2. CasaOS dashboard → **`+`** → **Install a customized app** → paste the
    contents of `docker-compose.yml`.
    *(or simply run `docker compose up -d` from the cloned directory).*
-3. Malta OSINT appears on the dashboard with its icon, reachable on host port
+3. Third Eye appears on the dashboard with its icon, reachable on host port
    `3000` (or whatever `THIRDEYE_PORT` you set in `.env`).
 
 The app icon is the gold Eye-of-Horus mark in
@@ -123,7 +123,7 @@ Copy `.env.template` to `.env` and fill in only what you need.
 | `SCANNER_KEY` | Shared secret; **must equal the backend's `OSIRIS_KEY`** | RECON toolkit |
 
 Without `SCANNER_URL`/`SCANNER_KEY` the RECON endpoints return `503` and the
-rest of Malta OSINT works normally. Generate a key with `openssl rand -hex 32`.
+rest of Third Eye works normally. Generate a key with `openssl rand -hex 32`.
 
 ### Optional keys (reserved / for higher rate limits)
 

@@ -126,7 +126,7 @@ export function AnalyticsDashboard() {
 
     const sourceEventCounts = new Map<string, number>();
     filteredEvents.forEach(e => {
-      const sourceName = e.provenance?.sourceName;
+      const sourceName = e.provenance?.adapterId;
       if (sourceName) {
         sourceEventCounts.set(sourceName, (sourceEventCounts.get(sourceName) || 0) + 1);
       }
@@ -312,7 +312,7 @@ export function AnalyticsDashboard() {
         />
         <StatCard 
           title="Active Sources" 
-          value={overview.activeSources} 
+          value={overview.activeSources.toString()} 
           trend={`${overview.healthySources} healthy • ${overview.degradedSources} degraded`}
           trendPositive={overview.degradedSources === 0}
           icon="📡"

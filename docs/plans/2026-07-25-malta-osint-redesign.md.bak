@@ -1,12 +1,12 @@
-# Malta OSINT — Global Intelligence Platform Redesign
+# Third Eye — Global Intelligence Platform Redesign
 
 ## Scope
-Worldwide intelligence dashboard for foreign affairs. Rebranded from "Malta OSINT" to "Malta OSINT". Consolidate 2236-line bloated CSS, fix readability, improve layout, enhance map, harden data pipeline, integrate smart system.
+Worldwide intelligence dashboard for foreign affairs. Rebranded from "Malta OSINT" to "Third Eye". Consolidate 2236-line bloated CSS, fix readability, improve layout, enhance map, harden data pipeline, integrate smart system.
 
 ## Phase 1: CSS Consolidation (globals.css 2236 → ~700 lines)
 
 ### Merge Strategy
-- **Keep:** Malta OSINT visual identity (gold/cyan/void, glassmorphism, Egyptian motif)
+- **Keep:** Third Eye visual identity (gold/cyan/void, glassmorphism, Egyptian motif)
 - **Keep:** Gotham well-structured component patterns (cards, sidebar, stat counters, badges, dividers, entry animations)
 - **Strip:** All unused CSS (~100 of 120+ classes are unreferenced in TSX)
 - **Consolidate:** Merge duplicate/overlapping components (pulse rings, tags/badges, splash screens, buttons)
@@ -19,13 +19,13 @@ Worldwide intelligence dashboard for foreign affairs. Rebranded from "Malta OSIN
 3. Base reset + scrollbar
 4. Glass panels (`.glass-panel`, `.glass-panel-sm`)
 5. HUD text system (`.hud-text`, `.hud-label` at 9px, `.hud-value`)
-6. Malta OSINT glow effects
+6. Third Eye glow effects
 7. Keyframes + animation classes (consolidated, no duplicates)
 8. Map overrides
 9. Layer toggle (keep premium, remove basic)
 10. Risk badges (`.risk-critical/high/medium/low`)
 11. Gotham component library (cards, stat counters, dividers, tags, badges, command bar, sidebar, grids, entry animation) — all kept even if unused, as design system primitives
-12. Splash screen (Gotham version, remove Malta OSINT version)
+12. Splash screen (Gotham version, remove Third Eye version)
 13. Responsive breakpoints (consolidated)
 14. Reduced motion
 
