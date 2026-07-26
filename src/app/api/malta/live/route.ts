@@ -31,8 +31,10 @@ function sourceMeta(
   count: number,
   error: string | null,
   latencyMs: number | null,
+  scope?: SourceMeta['scope'],
+  coverageLabel?: string,
 ): SourceMeta {
-  return { status, count, updatedAt: status === 'ok' || status === 'empty' ? new Date().toISOString() : null, latencyMs, error };
+  return { status, count, updatedAt: status === 'ok' || status === 'empty' ? new Date().toISOString() : null, latencyMs, error, scope, coverageLabel };
 }
 
 async function fetchMaltaFlights(): Promise<{ flights: MaltaFlight[]; meta: SourceMeta }> {
@@ -84,8 +86,8 @@ async function fetchMaltaFlights(): Promise<{ flights: MaltaFlight[]; meta: Sour
     }
 
     const elapsed = Date.now() - start;
-    return { flights: allAircraft, meta: sourceMeta(allAircraft.length > 0 ? 'ok' : 'empty', allAircraft.length, null, elapsed) };
-  } catch (e) {
+    return { flights: allAircraft, meta: sourceMeta(allAircraft.length > 0 ? 'ok' : 'empty', allAircraft.length, null, elapsed, 'multi-region', 'Global aviation sample from configured ADSB.lol regions') };
+    } catch (e) {
     const elapsed = Date.now() - start;
     const msg = e instanceof Error ? e.message : String(e);
     console.error('[Malta API] Flight fetch error:', msg);
@@ -101,7 +103,7 @@ async function fetchMarineConditions(): Promise<{ conditions: Record<string, unk
     if (!res.ok) throw new Error(`Marine API returned ${res.status}`);
     const data = await res.json();
     const elapsed = Date.now() - start;
-    return { conditions: data, meta: sourceMeta('ok', 1, null, elapsed) };
+    return { conditions: data, meta: sourceMeta('ok', 1, null, elapsed, 'local', 'Open-Meteo Marine — Malta area') };
   } catch (e) {
     const elapsed = Date.now() - start;
     const msg = e instanceof Error ? e.message : String(e);
@@ -111,7 +113,7 @@ async function fetchMarineConditions(): Promise<{ conditions: Record<string, unk
 }
 
 async function fetchOMRGData(): Promise<{ omrg: Record<string, unknown>; meta: SourceMeta }> {
-  return { omrg: {}, meta: sourceMeta('unconfigured', 0, 'Unverified endpoint — no confirmed API documentation available', null) };
+  return { omrg: {}, meta: sourceMeta('unconfigured', 0, 'Unverified endpoint', null, 'global', 'OMRG — not configured') };
 }
 
 async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: SourceMeta }> {
@@ -160,7 +162,7 @@ async function fetchMaltaNews(): Promise<{ news: MaltaNewsArticle[]; meta: Sourc
 
   const sorted = allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
   const elapsed = Date.now() - start;
-  return { news: sorted, meta: sourceMeta(sorted.length > 0 ? 'ok' : 'empty', sorted.length, null, elapsed) };
+  return { news: sorted, meta: sourceMeta(sorted.length > 0 ? 'ok' : 'empty', sorted.length, null, elapsed, 'national', 'Malta news (Lovin Malta, Newsbook, TVM News)') };
 }
 
 interface MaltaNewsArticle {
@@ -195,7 +197,7 @@ async function fetchSeismicData(): Promise<{ seismic: SeismicEvent[]; meta: Sour
       }));
 
     const elapsed = Date.now() - start;
-    return { seismic: events, meta: sourceMeta(events.length > 0 ? 'ok' : 'empty', events.length, null, elapsed) };
+    return { seismic: events, meta: sourceMeta(events.length > 0 ? 'ok' : 'empty', events.length, null, elapsed, 'global', 'USGS — M2.5+ worldwide, previous 24h') };
   } catch (e) {
     const elapsed = Date.now() - start;
     const msg = e instanceof Error ? e.message : String(e);
@@ -209,7 +211,7 @@ async function fetchFiresData(): Promise<{ fires: FireEvent[]; meta: SourceMeta 
   try {
     const firmsApiKey = process.env.FIRMS_API_KEY;
     if (!firmsApiKey) {
-      return { fires: [], meta: sourceMeta('unconfigured', 0, 'FIRMS_API_KEY not set', null) };
+      return { fires: [], meta: sourceMeta('unconfigured', 0, 'FIRMS_API_KEY not set', null, 'global', 'NASA FIRMS — global active fires') };
     }
 
     let fires: FireEvent[] = [];
@@ -245,9 +247,9 @@ async function fetchFiresData(): Promise<{ fires: FireEvent[]; meta: SourceMeta 
 
     const elapsed = Date.now() - start;
     if (fires.length === 0 && sourceUsed) {
-      return { fires: [], meta: sourceMeta('empty', 0, 'No fires in Malta bbox', elapsed) };
+      return { fires: [], meta: sourceMeta('empty', 0, 'No fires in Malta bbox', elapsed, 'regional', 'NASA FIRMS — Malta FIR bbox') };
     }
-    return { fires, meta: sourceMeta(fires.length > 0 ? 'ok' : 'empty', fires.length, null, elapsed) };
+    return { fires, meta: sourceMeta(fires.length > 0 ? 'ok' : 'empty', fires.length, null, elapsed, 'regional', 'NASA FIRMS — Malta FIR bbox') };
   } catch (e) {
     const elapsed = Date.now() - start;
     const msg = e instanceof Error ? e.message : String(e);

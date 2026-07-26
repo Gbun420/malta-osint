@@ -4,6 +4,8 @@ export interface SourceMeta {
   updatedAt: string | null;
   latencyMs: number | null;
   error: string | null;
+  scope?: 'global' | 'multi-region' | 'regional' | 'national' | 'local' | 'custom';
+  coverageLabel?: string;
 }
 
 export interface MaltaFlight {

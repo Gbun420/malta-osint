@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Menu, X, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText } from 'lucide-react';
+import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Menu, X, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText, AlertTriangle } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
@@ -216,27 +216,41 @@ export default function MaltaDashboard() {
             transition={{ duration: 0.15 }}
             className="absolute top-[44px] left-2 z-[300] glass-panel p-2 w-48"
           >
-            {[
-              { href: '/dashboard', label: 'Dashboard', icon: Map },
-              { href: '/analytics', label: 'Analytics', icon: Activity },
-              { href: '/events', label: 'Events', icon: Radio },
-              { href: '/brief', label: 'Briefing', icon: FileText },
-              { href: '/sources', label: 'Sources', icon: Globe },
-              { href: '/audio', label: 'Audio Intel', icon: Headphones },
-              { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
-              { href: '/review', label: 'Review Queue', icon: Briefcase },
-              { href: '/docs', label: 'API Docs', icon: FileText },
-            ].map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setShowNav(false)}
-                className="flex items-center gap-2 px-3 py-2 text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded transition-colors"
-              >
-                <item.icon className="w-3 h-3 text-[var(--gold-primary)]" />
-                {item.label}
-              </Link>
-            ))}
+            {(() => {
+              const navItems = [
+                { href: '/dashboard', label: 'Command Centre', icon: Map },
+                { href: '/brief', label: "Minister's Brief", icon: FileText },
+                { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
+                { hr: true },
+                { href: '/events', label: 'Global Events', icon: Radio },
+                { href: '/countries', label: 'Countries', icon: Globe },
+                { hr: true },
+                { href: '/maritime', label: 'Maritime', icon: Ship },
+                { href: '/aviation', label: 'Aviation', icon: Plane },
+                { hr: true },
+                { href: '/sanctions', label: 'Sanctions', icon: Activity },
+                { hr: true },
+                { href: '/sources', label: 'Source Health', icon: Globe },
+                { href: '/review', label: 'Review Queue', icon: Briefcase },
+                { href: '/audio', label: 'Audio Intel', icon: Headphones },
+                { href: '/docs', label: 'API Docs', icon: FileText },
+              ];
+              return navItems.map((item: any, idx: number) =>
+                item.hr ? (
+                  <div key={idx} className="border-t border-[var(--border-secondary)] my-1" />
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setShowNav(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded transition-colors"
+                  >
+                    <item.icon className="w-3 h-3 text-[var(--gold-primary)]" />
+                    {item.label}
+                  </Link>
+                )
+              );
+            })()}
           </motion.nav>
         )}
       </AnimatePresence>
