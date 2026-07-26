@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { MaltaLiveResponse, MaltaFlight, SourceMeta } from '@/lib/malta-live-types';
 
 const MALTA_MED_BBOX = { north: 37, south: 34, east: 16, west: 12 };
@@ -32,7 +32,6 @@ export default function Aviation() {
   const [error, setError] = useState<string | null>(null);
   const [maltaRegion, setMaltaRegion] = useState(true);
   const [hideStale, setHideStale] = useState(false);
-  const nowRef = useRef(Date.now());
 
   useEffect(() => {
     const load = async () => {
@@ -97,7 +96,7 @@ export default function Aviation() {
           Hide Stale
         </button>
         <span className="text-xs text-white/30 ml-auto">
-          {new Date(data?.timestamp || nowRef.current).toLocaleTimeString()}
+          {data?.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '—'}
         </span>
       </div>
 

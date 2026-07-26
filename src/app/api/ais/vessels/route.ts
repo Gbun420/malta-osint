@@ -140,7 +140,7 @@ export async function GET() {
     MAJOR_REGIONS.map(region => fetchRegion(apiKey, region)),
   );
 
-  let allVessels: VesselAPIPosition[] = [];
+  const allVessels: VesselAPIPosition[] = [];
   let dataSource = 'terrestrial';
   let hasErrors = false;
   const regionErrors: string[] = [];

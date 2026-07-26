@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Vessel {
   mmsi: number;
@@ -57,7 +57,7 @@ export default function Maritime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [maltaOnly, setMaltaOnly] = useState(true);
-  const nowRef = useRef(Date.now());
+  const [ageSeconds, setAgeSeconds] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -75,6 +75,11 @@ export default function Maritime() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!data?.timestamp) return;
+    setAgeSeconds(Math.floor((Date.now() - data.timestamp) / 1000));
+  }, [data]);
 
   const vessels = data?.vessels || [];
   const filtered = maltaOnly ? vessels.filter(isInMaltaBbox) : vessels;
@@ -152,7 +157,7 @@ export default function Maritime() {
             </div>
             <div className="glass-panel p-4">
               <div className="hud-label">Freshness</div>
-              <div className="hud-value text-lg">{data?.timestamp ? formatAge(Math.floor((Date.now() - data.timestamp) / 1000)) : '-'}</div>
+              <div className="hud-value text-lg">{ageSeconds !== null ? formatAge(ageSeconds) : '-'}</div>
             </div>
             <div className="glass-panel p-4">
               <div className="hud-label">Stale Tracks</div>
