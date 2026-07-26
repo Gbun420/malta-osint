@@ -73,13 +73,13 @@ export default function MaltaLayerPanel({ activeLayers, onToggle }: MaltaLayerPa
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.5, duration: 0.4 }}
-      className="absolute top-20 left-4 z-[200] w-64 glass-panel styled-scrollbar overflow-hidden"
+      className="absolute top-20 left-[72px] z-[200] w-64 glass-panel styled-scrollbar overflow-hidden"
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[var(--border-secondary)]">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono tracking-[0.2em] text-[var(--text-muted)]">LAYER CONTROL</span>
-          <span className="text-[9px] font-mono text-[var(--gold-primary)]">{activeCount} ACTIVE</span>
+          <span className="text-[13px] font-mono tracking-[0.2em] text-[var(--text-muted)]">LAYER CONTROL</span>
+          <span className="text-[12px] font-mono text-[var(--gold-primary)]">{activeCount} ACTIVE</span>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export default function MaltaLayerPanel({ activeLayers, onToggle }: MaltaLayerPa
                 <ChevronRight className="w-3 h-3 text-[var(--text-muted)]" />
               )}
               <group.icon className="w-3.5 h-3.5" style={{ color: group.color }} />
-              <span className="text-[9px] font-mono tracking-[0.15em] text-[var(--text-secondary)]">
+              <span className="text-[12px] font-mono tracking-[0.15em] text-[var(--text-secondary)]">
                 {group.label}
               </span>
             </button>
@@ -123,7 +123,7 @@ export default function MaltaLayerPanel({ activeLayers, onToggle }: MaltaLayerPa
                         activeLayers[layer.key] ? 'bg-[var(--gold-primary)]' : 'bg-[var(--text-muted)]'
                       }`} />
                       <layer.icon className="w-3 h-3 text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]" />
-                      <span className="text-[9px] font-mono tracking-[0.1em] text-[var(--text-secondary)] flex-1 text-left">
+                      <span className="text-[12px] font-mono tracking-[0.1em] text-[var(--text-secondary)] flex-1 text-left">
                         {layer.label}
                       </span>
                       {activeLayers[layer.key] ? (

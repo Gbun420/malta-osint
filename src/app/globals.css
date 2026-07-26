@@ -65,6 +65,7 @@ html, body {
   background: var(--bg-void);
   color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;

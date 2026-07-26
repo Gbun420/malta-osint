@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Menu, X, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText, AlertTriangle } from 'lucide-react';
+import { Ship, Plane, Activity, Newspaper, RefreshCw, Zap, Map, Globe, Radio, Shield, Briefcase, Headphones, FileText } from 'lucide-react';
 
 import { useAISStream } from '@/hooks/useAISStream';
 import MaltaLayerPanel from '@/components/malta/MaltaLayerPanel';
@@ -41,7 +42,6 @@ export default function MaltaDashboard() {
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showSmartSystem, setShowSmartSystem] = useState(false);
-  const [showNav, setShowNav] = useState(false);
 
   const { vessels: vesselsMap, vesselCount, isConnected, status: aisWsStatus } = useAISStream({
     enabled: activeLayers.vessels,
@@ -160,15 +160,8 @@ export default function MaltaDashboard() {
 
       <header className="absolute top-0 left-0 right-0 z-[300] gotham-command-bar">
         <div className="gotham-command-bar__section">
-          <button
-            onClick={() => setShowNav(s => !s)}
-            className="gotham-command-bar__action mr-2"
-            title="Navigation menu"
-          >
-            {showNav ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
-          </button>
           <span className="gotham-command-bar__title">MALTA OSINT</span>
-          <span className="text-[9px] text-[var(--text-muted)] font-mono tracking-[0.15em]">
+          <span className="text-[13px] text-[var(--text-muted)] font-mono tracking-[0.15em]">
             GLOBAL INTELLIGENCE
           </span>
         </div>
@@ -179,17 +172,17 @@ export default function MaltaDashboard() {
               aisWsStatus === 'connecting' ? 'bg-[var(--alert-orange)] animate-pulse' :
               'bg-[var(--alert-red)]'
             }`} />
-            <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+            <span className="text-[12px] font-mono text-[var(--text-secondary)]">
               AIS: {aisWsStatus === 'disabled' ? 'N/A' : aisWsStatus.toUpperCase()}
             </span>
           </div>
-          <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+          <span className="text-[12px] font-mono text-[var(--text-secondary)]">
             VESSELS: <span className="text-[var(--cyan-primary)]">{vesselsArray.length}</span>
           </span>
-          <span className="text-[9px] font-mono text-[var(--text-secondary)]">
+          <span className="text-[12px] font-mono text-[var(--text-secondary)]">
             FEEDS: <span className="text-[var(--gold-primary)]">{Object.values(activeLayers).filter(Boolean).length}</span>
           </span>
-          <span className="text-[9px] font-mono text-[var(--text-muted)] tabular-nums">{timeStr} UTC</span>
+          <span className="text-[12px] font-mono text-[var(--text-muted)] tabular-nums">{timeStr} UTC</span>
           <button
             onClick={() => setShowSmartSystem(s => !s)}
             className={`gotham-command-bar__action ${showSmartSystem ? '!border-[var(--gold-primary)] !text-[var(--gold-primary)] !shadow-[0_0_12px_rgba(212,175,55,0.15)]' : ''}`}
@@ -207,53 +200,50 @@ export default function MaltaDashboard() {
         </div>
       </header>
 
-      <AnimatePresence>
-        {showNav && (
-          <motion.nav
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-[44px] left-2 z-[300] glass-panel p-2 w-48"
-          >
-            {(() => {
-              const navItems = [
-                { href: '/dashboard', label: 'Command Centre', icon: Map },
-                { href: '/brief', label: "Minister's Brief", icon: FileText },
-                { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
-                { hr: true },
-                { href: '/events', label: 'Global Events', icon: Radio },
-                { href: '/countries', label: 'Countries', icon: Globe },
-                { hr: true },
-                { href: '/maritime', label: 'Maritime', icon: Ship },
-                { href: '/aviation', label: 'Aviation', icon: Plane },
-                { hr: true },
-                { href: '/sanctions', label: 'Sanctions', icon: Activity },
-                { hr: true },
-                { href: '/sources', label: 'Source Health', icon: Globe },
-                { href: '/review', label: 'Review Queue', icon: Briefcase },
-                { href: '/audio', label: 'Audio Intel', icon: Headphones },
-                { href: '/docs', label: 'API Docs', icon: FileText },
-              ];
-              return navItems.map((item: any, idx: number) =>
-                item.hr ? (
-                  <div key={idx} className="border-t border-[var(--border-secondary)] my-1" />
-                ) : (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setShowNav(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded transition-colors"
-                  >
-                    <item.icon className="w-3 h-3 text-[var(--gold-primary)]" />
-                    {item.label}
-                  </Link>
-                )
-              );
-            })()}
-          </motion.nav>
-        )}
-      </AnimatePresence>
+      <nav className="absolute left-3 top-1/2 -translate-y-1/2 z-[300] flex flex-col items-center gap-1 glass-panel py-3 px-2">
+        {(() => {
+          const pathname = usePathname();
+          const navItems: ({ href: string; label: string; icon: any } | { divider: true })[] = [
+            { href: '/', label: 'Command Centre', icon: Map },
+            { href: '/brief', label: "Minister's Brief", icon: FileText },
+            { href: '/malta-impact', label: 'Malta Impact', icon: Shield },
+            { divider: true },
+            { href: '/events', label: 'Global Events', icon: Radio },
+            { href: '/countries', label: 'Countries', icon: Globe },
+            { divider: true },
+            { href: '/maritime', label: 'Maritime', icon: Ship },
+            { href: '/aviation', label: 'Aviation', icon: Plane },
+            { divider: true },
+            { href: '/sanctions', label: 'Sanctions', icon: Activity },
+            { divider: true },
+            { href: '/sources', label: 'Source Health', icon: Globe },
+            { href: '/review', label: 'Review Queue', icon: Briefcase },
+            { href: '/audio', label: 'Audio Intel', icon: Headphones },
+            { href: '/docs', label: 'API Docs', icon: FileText },
+          ];
+          return navItems.map((item: any, idx: number) =>
+            item.divider ? (
+              <div key={idx} className="w-6 border-t border-[var(--border-secondary)] my-0.5" />
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
+                  pathname === item.href
+                    ? 'bg-[var(--gold-primary)]/10 text-[var(--gold-primary)] shadow-[inset_0_0_0_1px_rgba(212,175,55,0.2)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                }`}
+                title={item.label}
+              >
+                <item.icon className="w-4 h-4" />
+                <span className="absolute left-full ml-3 px-2.5 py-1.5 rounded-md text-[12px] font-mono whitespace-nowrap bg-[var(--bg-void)] border border-[var(--border-secondary)] text-[var(--text-primary)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+                  {item.label}
+                </span>
+              </Link>
+            )
+          );
+        })()}
+      </nav>
 
       <MaltaLayerPanel activeLayers={activeLayers} onToggle={toggleLayer} />
 
@@ -261,56 +251,56 @@ export default function MaltaDashboard() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.7 }}
-        className="absolute top-[60px] right-4 z-[200] glass-panel p-3 w-56"
+        className="absolute top-[60px] right-4 z-[200] glass-panel p-3 w-64"
       >
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Ship className="w-3 h-3 text-[var(--cyan-primary)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+            <div className="flex items-center gap-2">
+              <Ship className="w-4 h-4 text-[var(--cyan-primary)]" />
+              <span className="text-[13px] font-mono text-[var(--text-muted)]">
                 {sourceMeta?.marine?.coverageLabel ? `${sourceMeta.marine.coverageLabel.toUpperCase()} VESSELS` : 'VESSELS'}
               </span>
             </div>
-            <span className="text-[13px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
+            <span className="text-[15px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('aviation').label}`}>
-            <div className="flex items-center gap-1.5">
-              <Plane className="w-3 h-3 text-[var(--gold-primary)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+            <div className="flex items-center gap-2">
+              <Plane className="w-4 h-4 text-[var(--gold-primary)]" />
+              <span className="text-[13px] font-mono text-[var(--text-muted)]">
                 {sourceMeta?.aviation?.coverageLabel ? `${sourceMeta.aviation.coverageLabel.toUpperCase()} AIRCRAFT` : 'AIRCRAFT'}
               </span>
             </div>
-            <span className="text-[13px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
+            <span className="text-[15px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('seismic').label}`}>
-            <div className="flex items-center gap-1.5">
-              <Activity className="w-3 h-3 text-[var(--alert-orange)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[var(--alert-orange)]" />
+              <span className="text-[13px] font-mono text-[var(--text-muted)]">
                 {sourceMeta?.seismic?.coverageLabel ? `${sourceMeta.seismic.coverageLabel.toUpperCase()} SEISMIC` : 'SEISMIC'}
               </span>
             </div>
-            <span className="text-[13px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
+            <span className="text-[15px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('fires').label}`}>
-            <div className="flex items-center gap-1.5">
-              <Activity className="w-3 h-3 text-[var(--alert-red)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[var(--alert-red)]" />
+              <span className="text-[13px] font-mono text-[var(--text-muted)]">
                 {sourceMeta?.fires?.coverageLabel ? `${sourceMeta.fires.coverageLabel.toUpperCase()} FIRES` : 'FIRES'}
               </span>
             </div>
-            <span className="text-[13px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
+            <span className="text-[15px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('news').label}`}>
-            <div className="flex items-center gap-1.5">
-              <Newspaper className="w-3 h-3 text-[var(--text-muted)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-[var(--text-muted)]" />
+              <span className="text-[13px] font-mono text-[var(--text-muted)]">
                 {sourceMeta?.news?.coverageLabel ? `${sourceMeta.news.coverageLabel.toUpperCase()} NEWS` : 'NEWS'}
               </span>
             </div>
-            <span className="text-[13px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
+            <span className="text-[15px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
           </div>
           <div className="border-t border-[var(--border-secondary)] pt-2 mt-2">
-            <div className="text-[8px] font-mono text-[var(--text-muted)] tracking-widest">
+            <div className="text-[11px] font-mono text-[var(--text-muted)] tracking-widest">
               UPDATED {timeStr} UTC
             </div>
           </div>
@@ -331,7 +321,7 @@ export default function MaltaDashboard() {
           className="absolute bottom-4 left-4 z-[200] glass-panel p-4 w-72"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono tracking-[0.15em] text-[var(--text-muted)]">
+            <span className="text-[13px] font-mono tracking-[0.15em] text-[var(--text-muted)]">
               {selectedEntity.type?.toUpperCase() || 'ENTITY'}
             </span>
             <button
@@ -341,27 +331,27 @@ export default function MaltaDashboard() {
               ×
             </button>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {selectedEntity.name && (
-              <div className="text-[11px] font-mono text-[var(--text-primary)]">{selectedEntity.name}</div>
+              <div className="text-[14px] font-mono text-[var(--text-primary)]">{selectedEntity.name}</div>
             )}
             {selectedEntity.callsign && (
-              <div className="text-[9px] font-mono text-[var(--cyan-primary)]">CALLSIGN: {selectedEntity.callsign}</div>
+              <div className="text-[12px] font-mono text-[var(--cyan-primary)]">CALLSIGN: {selectedEntity.callsign}</div>
             )}
             {selectedEntity.mmsi && (
-              <div className="text-[9px] font-mono text-[var(--cyan-primary)]">MMSI: {selectedEntity.mmsi}</div>
+              <div className="text-[12px] font-mono text-[var(--cyan-primary)]">MMSI: {selectedEntity.mmsi}</div>
             )}
             {selectedEntity.speed !== undefined && (
-              <div className="text-[9px] font-mono text-[var(--text-muted)]">SPEED: {selectedEntity.speed} kn</div>
+              <div className="text-[12px] font-mono text-[var(--text-muted)]">SPEED: {selectedEntity.speed} kn</div>
             )}
             {selectedEntity.heading !== undefined && (
-              <div className="text-[9px] font-mono text-[var(--text-muted)]">HDG: {selectedEntity.heading}°</div>
+              <div className="text-[12px] font-mono text-[var(--text-muted)]">HDG: {selectedEntity.heading}°</div>
             )}
             {selectedEntity.magnitude && (
-              <div className="text-[9px] font-mono text-[var(--alert-orange)]">MAG: {selectedEntity.magnitude}</div>
+              <div className="text-[12px] font-mono text-[var(--alert-orange)]">MAG: {selectedEntity.magnitude}</div>
             )}
             {selectedEntity.title && (
-              <div className="text-[9px] font-mono text-[var(--text-secondary)] line-clamp-2">{selectedEntity.title}</div>
+              <div className="text-[12px] font-mono text-[var(--text-secondary)] line-clamp-2">{selectedEntity.title}</div>
             )}
           </div>
         </motion.div>
@@ -370,13 +360,13 @@ export default function MaltaDashboard() {
       {news.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 z-[200] glass-panel-sm rounded-none border-x-0 border-b-0 px-4 py-1.5 overflow-hidden pointer-events-none">
           <div className="flex items-center gap-3">
-            <span className="shrink-0 text-[8px] font-mono tracking-[0.2em] text-[var(--gold-primary)]">NEWS</span>
+            <span className="shrink-0 text-[11px] font-mono tracking-[0.2em] text-[var(--gold-primary)]">NEWS</span>
             <div className="overflow-hidden flex-1">
               <div className="animate-ticker flex gap-12 whitespace-nowrap">
-                <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                <span className="text-[13px] font-mono text-[var(--text-secondary)]">
                   {news.map((a: any) => a.title).filter(Boolean).join('  ●  ')}
                 </span>
-                <span className="text-[10px] font-mono text-[var(--text-secondary)]">
+                <span className="text-[13px] font-mono text-[var(--text-secondary)]">
                   {news.map((a: any) => a.title).filter(Boolean).join('  ●  ')}
                 </span>
               </div>
