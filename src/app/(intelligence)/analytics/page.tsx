@@ -59,11 +59,11 @@ export function AnalyticsDashboard() {
     const eventsLast30d = events.filter(e => e.eventTime && new Date(e.eventTime) >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)).length;
     const criticalEvents = filteredEvents.filter(e => e.severity >= 4).length;
     const highConfidenceEvents = filteredEvents.filter(e => (e.confidenceScore || 0) >= 80).length;
-    const verifiedEvents = filteredEvents.filter(e => e.verificationState === 'verified' || e.verificationState === 'multi-source').length;
+    const verifiedEvents = filteredEvents.filter(e => e.verificationState === 'multi-source' || e.verificationState === 'official-confirmation').length;
 
     const activeSources = sourceHealth.length;
     const healthySources = sourceHealth.filter(s => s.state === 'healthy').length;
-    const degradedSources = sourceHealth.filter(s => s.state === 'degraded' || s.state === 'unhealthy').length;
+    const degradedSources = sourceHealth.filter(s => s.state === 'degraded' || s.state === 'error' || s.state === 'stale').length;
 
     // Trends
     const eventsByDayMap = new Map<string, number>();
@@ -126,8 +126,9 @@ export function AnalyticsDashboard() {
 
     const sourceEventCounts = new Map<string, number>();
     filteredEvents.forEach(e => {
-      if (e.sourceId) {
-        sourceEventCounts.set(e.sourceId, (sourceEventCounts.get(e.sourceId) || 0) + 1);
+      const sourceName = e.provenance?.sourceName;
+      if (sourceName) {
+        sourceEventCounts.set(sourceName, (sourceEventCounts.get(sourceName) || 0) + 1);
       }
     });
     const mostActiveSource = Array.from(sourceEventCounts.entries())
