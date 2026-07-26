@@ -23,30 +23,37 @@ export async function GET() {
     const allArticles: any[] = [];
     const seenUrls = new Set<string>();
 
-    const results = await Promise.allSettled(
-      queries.map(async (query) => {
+    const results: { articles: any[]; label: string }[] = [];
+
+    for (const query of queries) {
+      try {
         const params = new URLSearchParams({
           query: query.q,
           mode: 'artlist',
           format: 'json',
           timespan: '72h',
-          maxrecords: '10',
+          maxrecords: '8',
           sort: 'datedesc',
         });
 
         const res = await fetch(`${GDELT_DOC_URL}?${params}`, {
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(8000),
         });
 
-        if (!res.ok) return null;
-        const data = await res.json();
-        return { articles: data?.articles || data?.results || [], label: query.label };
-      })
-    );
+        if (res.ok) {
+          const text = await res.text();
+          try {
+            const data = JSON.parse(text);
+            const articles = data?.articles || data?.results || [];
+            if (articles.length > 0) results.push({ articles, label: query.label });
+          } catch { /* skip non-JSON responses */ }
+        }
 
-    for (const result of results) {
-      if (result.status !== 'fulfilled' || !result.value) continue;
-      const { articles, label } = result.value;
+        await new Promise(r => setTimeout(r, 6000));
+      } catch { /* skip failed queries */ }
+    }
+
+    for (const { articles, label } of results) {
       for (const article of articles) {
           const url = article.url || article.link || '';
           if (!url || seenUrls.has(url)) continue;

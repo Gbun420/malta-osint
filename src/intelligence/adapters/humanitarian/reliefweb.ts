@@ -15,7 +15,7 @@ export async function fetchReliefWeb(): Promise<AdapterResult<IntelligenceEvent>
   const appName = process.env.RELIEFWEB_APP_NAME || 'malta-osint';
 
   try {
-    const url = `https://api.reliefweb.int/v2/reports?appname=${appName}&limit=50&sort[]=date:desc&fields[]=title&fields[]=body&fields[]=date&fields[]=url&fields[]=source`;
+    const url = `https://api.reliefweb.int/v2/reports?appname=${appName}&limit=50&sort[]=date:desc&fields[include][]=title&fields[include][]=body&fields[include][]=date&fields[include][]=url&fields[include][]=source`;
     const fetchResult = await safeFetch({
       url,
       timeoutMs: 15000,
