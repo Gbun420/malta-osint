@@ -103,7 +103,10 @@ export interface IntelligenceEvent {
   sourceCount: number;
   officialSourceCount: number;
   evidenceIds: string[];
+  relevanceFactors?: { key: string; label: string; points: number }[];
+  scopeLabel?: string;
   claimIds: string[];
+  relatedEventIds?: string[];
   status: EventStatus;
   provenance: ProvenanceRecord;
 }

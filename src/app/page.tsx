@@ -132,11 +132,11 @@ export default function MaltaDashboard() {
           </div>
           <div className="splash-scanline" />
           <h1 className="text-xl font-bold tracking-[0.4em] text-[var(--gold-primary)] font-mono mb-3 gotham-enter">
-            THIRD EYE
+            MALTA OSINT
           </h1>
           <div className="w-48 splash-progress-bar mb-3" />
           <p className="text-[10px] font-mono tracking-[0.3em] text-[var(--text-muted)] gotham-enter gotham-enter-delay-1">
-            GLOBAL INTELLIGENCE PLATFORM
+            GLOBAL INTELLIGENCE — MALTA FOCUS
           </p>
         </motion.div>
       )}
@@ -261,41 +261,51 @@ export default function MaltaDashboard() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.7 }}
-        className="absolute top-[60px] right-4 z-[200] glass-panel p-3 w-52"
+        className="absolute top-[60px] right-4 z-[200] glass-panel p-3 w-56"
       >
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Ship className="w-3 h-3 text-[var(--cyan-primary)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">VESSELS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                {sourceMeta?.marine?.coverageLabel ? `${sourceMeta.marine.coverageLabel.toUpperCase()} VESSELS` : 'VESSELS'}
+              </span>
             </div>
             <span className="text-[13px] font-mono font-bold text-[var(--cyan-primary)]">{vesselsArray.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('aviation').label}`}>
             <div className="flex items-center gap-1.5">
               <Plane className="w-3 h-3 text-[var(--gold-primary)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">FLIGHTS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                {sourceMeta?.aviation?.coverageLabel ? `${sourceMeta.aviation.coverageLabel.toUpperCase()} AIRCRAFT` : 'AIRCRAFT'}
+              </span>
             </div>
             <span className="text-[13px] font-mono font-bold text-[var(--gold-primary)]">{flights.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('seismic').label}`}>
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[var(--alert-orange)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">SEISMIC</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                {sourceMeta?.seismic?.coverageLabel ? `${sourceMeta.seismic.coverageLabel.toUpperCase()} SEISMIC` : 'SEISMIC'}
+              </span>
             </div>
             <span className="text-[13px] font-mono font-bold text-[var(--alert-orange)]">{earthquakes.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('fires').label}`}>
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3 text-[var(--alert-red)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">FIRES</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                {sourceMeta?.fires?.coverageLabel ? `${sourceMeta.fires.coverageLabel.toUpperCase()} FIRES` : 'FIRES'}
+              </span>
             </div>
             <span className="text-[13px] font-mono font-bold text-[var(--alert-red)]">{fires.length}</span>
           </div>
           <div className="flex items-center justify-between" title={`Source: ${formatSourceStatus('news').label}`}>
             <div className="flex items-center gap-1.5">
               <Newspaper className="w-3 h-3 text-[var(--text-muted)]" />
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">NEWS</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                {sourceMeta?.news?.coverageLabel ? `${sourceMeta.news.coverageLabel.toUpperCase()} NEWS` : 'NEWS'}
+              </span>
             </div>
             <span className="text-[13px] font-mono font-bold text-[var(--text-muted)]">{news.length}</span>
           </div>
